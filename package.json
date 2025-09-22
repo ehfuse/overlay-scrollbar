@@ -1,0 +1,56 @@
+{
+    "name": "@ehfuse/overlay-scrollbar",
+    "version": "1.0.0",
+    "description": "A React component that provides a custom overlay scrollbar with smooth animations and auto-hide functionality",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "rollup -c",
+        "prepublishOnly": "npm run build",
+        "dev": "rollup -c -w",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "react",
+        "scrollbar",
+        "overlay",
+        "custom-scrollbar",
+        "typescript",
+        "ui-component",
+        "smooth-scrolling",
+        "auto-hide"
+    ],
+    "author": "KIM YOUNG JIN <ehfuse@gmail.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ehfuse/overlay-scrollbar.git"
+    },
+    "bugs": {
+        "url": "https://github.com/ehfuse/overlay-scrollbar/issues"
+    },
+    "homepage": "https://github.com/ehfuse/overlay-scrollbar#readme",
+    "peerDependencies": {
+        "react": ">=16.8.0",
+        "react-dom": ">=16.8.0"
+    },
+    "devDependencies": {
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-typescript": "^11.1.5",
+        "@types/node": "^20.19.17",
+        "@types/react": "^18.2.31",
+        "@types/react-dom": "^18.2.14",
+        "rollup": "^4.1.4",
+        "rollup-plugin-dts": "^6.1.0",
+        "rollup-plugin-peer-deps-external": "^2.2.4",
+        "tslib": "^2.6.2",
+        "typescript": "^5.2.2"
+    }
+}
