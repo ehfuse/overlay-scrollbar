@@ -1,6 +1,8 @@
 # OverlayScrollbar
 
-A React component that provides a custom overlay scrollbar with smooth animations and auto-hide functionality.
+A highly customizable React component that provides a beautiful overlay scrollbar with extensive styling options, interactive features, and smooth animations.
+
+다양한 스타일링 옵션, 인터랙티브 기능, 부드러운 애니메이션을 제공하는 고도로 커스터마이징 가능한 React 오버레이 스크롤바 컴포넌트입니다.
 
 ## 📚 Documentation
 
@@ -9,14 +11,31 @@ A React component that provides a custom overlay scrollbar with smooth animation
 
 ## Features
 
--   🎨 **Custom styled scrollbar** - Beautiful overlay scrollbar that doesn't take up content space
--   ⚡ **Smooth animations** - Smooth fade-in/out transitions with customizable timing
--   🔍 **Auto-hide functionality** - Automatically hides when not needed and shows on scroll/hover
--   📱 **Responsive design** - Adapts to container size changes with ResizeObserver
--   🎯 **Interactive** - Support for click-to-scroll and drag-to-scroll functionality
--   🔧 **TypeScript support** - Full TypeScript support with proper type definitions
--   🪶 **Lightweight** - No external dependencies except React
--   ♿ **Accessible** - Maintains native scroll behavior while providing visual enhancements
+-   🎨 **Fully Customizable** - Control colors, sizes, radius, and positioning of all scrollbar elements
+-   🏹 **Arrow Navigation** - Optional arrow buttons for precise scrolling control
+-   ⚡ **Smooth Animations** - Fade-in/out transitions with hover effects and drag feedback
+-   🔍 **Smart Auto-hide** - Intelligent visibility management based on scroll state and user interaction
+-   📐 **Flexible Sizing** - Independent control of track width, thumb width, and minimum thumb height
+-   🎯 **Interactive** - Click-to-scroll, drag-to-scroll, and wheel event handling
+-   🖱️ **Hover Effects** - Visual feedback on hover for arrows and improved UX
+-   📱 **True Overlay** - Doesn't affect content layout, floats over content
+-   🔧 **TypeScript** - Complete TypeScript support with detailed type definitions
+-   🪶 **Zero Dependencies** - Only requires React, no external libraries
+-   ♿ **Accessible** - Preserves native scroll behavior while enhancing visual presentation
+
+## 기능 소개
+
+-   🎨 **완전한 커스터마이징** - 스크롤바의 모든 요소에 대한 색상, 크기, 둥근 모서리, 위치 제어
+-   🏹 **화살표 내비게이션** - 정밀한 스크롤 제어를 위한 선택적 화살표 버튼
+-   ⚡ **부드러운 애니메이션** - 호버 효과와 드래그 피드백이 포함된 페이드 인/아웃 전환
+-   🔍 **스마트 자동 숨김** - 스크롤 상태와 사용자 상호작용에 기반한 지능적인 표시 관리
+-   📐 **유연한 크기 조정** - 트랙 너비, 썸 너비, 최소 썸 높이의 독립적 제어
+-   🎯 **인터랙티브** - 클릭 스크롤, 드래그 스크롤, 휠 이벤트 처리
+-   🖱️ **호버 효과** - 화살표 호버 시 시각적 피드백 및 향상된 UX
+-   📱 **진정한 오버레이** - 콘텐츠 레이아웃에 영향을 주지 않고 콘텐츠 위에 떠 있음
+-   🔧 **TypeScript** - 상세한 타입 정의를 포함한 완전한 TypeScript 지원
+-   🪶 **의존성 없음** - React만 필요하며 외부 라이브러리 불필요
+-   ♿ **접근성** - 시각적 표현을 향상시키면서 기본 스크롤 동작 보존
 
 ## Installation
 
@@ -25,6 +44,18 @@ npm install @ehfuse/overlay-scrollbar
 ```
 
 or
+
+```bash
+yarn add @ehfuse/overlay-scrollbar
+```
+
+## 설치
+
+```bash
+npm install @ehfuse/overlay-scrollbar
+```
+
+또는
 
 ```bash
 yarn add @ehfuse/overlay-scrollbar
@@ -41,9 +72,18 @@ import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
 function App() {
     return (
         <div style={{ height: "400px" }}>
-            <OverlayScrollbar>
+            <OverlayScrollbar
+                showArrows={true}
+                thumbRadius={6}
+                trackColor="rgba(0, 0, 0, 0.1)"
+                thumbColor="rgba(100, 100, 100, 0.7)"
+                arrowColor="rgba(80, 80, 80, 0.8)"
+                hideDelay={1500} // Auto-hide after 1.5s
+                hideDelayOnWheel={700} // Quick hide after wheel scroll
+            >
                 <div style={{ height: "1000px" }}>
                     {/* Your scrollable content here */}
+                    <p>Content that requires scrolling...</p>
                 </div>
             </OverlayScrollbar>
         </div>
@@ -51,9 +91,9 @@ function App() {
 }
 ```
 
-## Usage
+## 빠른 시작
 
-### Basic Usage
+자세한 설정 지침은 [시작하기 가이드](https://github.com/ehfuse/overlay-scrollbar/blob/main/docs/getting-started-ko.md)를 참조하세요.
 
 ```tsx
 import React from "react";
@@ -62,135 +102,24 @@ import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
 function App() {
     return (
         <div style={{ height: "400px" }}>
-            <OverlayScrollbar>
+            <OverlayScrollbar
+                showArrows={true}
+                thumbRadius={6}
+                trackColor="rgba(0, 0, 0, 0.1)"
+                thumbColor="rgba(100, 100, 100, 0.7)"
+                arrowColor="rgba(80, 80, 80, 0.8)"
+                hideDelay={1500} // 1.5초 후 자동 숨김
+                hideDelayOnWheel={700} // 휠 스크롤 후 빠른 숨김
+            >
                 <div style={{ height: "1000px" }}>
-                    {/* Your scrollable content here */}
-                    <p>Long content that requires scrolling...</p>
+                    {/* 스크롤 가능한 콘텐츠 */}
+                    <p>스크롤이 필요한 콘텐츠...</p>
                 </div>
             </OverlayScrollbar>
         </div>
     );
 }
 ```
-
-### With Ref Access
-
-```tsx
-import React, { useRef } from "react";
-import {
-    OverlayScrollbar,
-    OverlayScrollbarRef,
-} from "@ehfuse/overlay-scrollbar";
-
-function App() {
-    const scrollbarRef = useRef<OverlayScrollbarRef>(null);
-
-    const scrollToTop = () => {
-        scrollbarRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    const getScrollInfo = () => {
-        if (scrollbarRef.current) {
-            console.log("Scroll Top:", scrollbarRef.current.scrollTop);
-            console.log("Scroll Height:", scrollbarRef.current.scrollHeight);
-            console.log("Client Height:", scrollbarRef.current.clientHeight);
-        }
-    };
-
-    return (
-        <div style={{ height: "400px" }}>
-            <button onClick={scrollToTop}>Scroll to Top</button>
-            <button onClick={getScrollInfo}>Get Scroll Info</button>
-
-            <OverlayScrollbar ref={scrollbarRef}>
-                <div style={{ height: "1000px" }}>
-                    {/* Your scrollable content here */}
-                </div>
-            </OverlayScrollbar>
-        </div>
-    );
-}
-```
-
-### With Custom Styling
-
-```tsx
-import React from "react";
-import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
-
-function App() {
-    return (
-        <OverlayScrollbar
-            className="my-scrollbar"
-            style={{
-                height: "400px",
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-            }}
-            onScroll={(event) => {
-                console.log("Scrolled!", event);
-            }}
-        >
-            <div style={{ height: "1000px", padding: "20px" }}>
-                {/* Your content */}
-            </div>
-        </OverlayScrollbar>
-    );
-}
-```
-
-## API Reference
-
-### Props
-
-| Prop        | Type                     | Default | Description                                |
-| ----------- | ------------------------ | ------- | ------------------------------------------ |
-| `children`  | `ReactNode`              | -       | The content to be scrolled                 |
-| `className` | `string`                 | -       | Additional CSS class for the container     |
-| `style`     | `React.CSSProperties`    | -       | Additional inline styles for the container |
-| `onScroll`  | `(event: Event) => void` | -       | Callback fired when scrolling occurs       |
-
-### Ref Methods
-
-The component exposes several methods through ref:
-
-| Method               | Type                                 | Description                              |
-| -------------------- | ------------------------------------ | ---------------------------------------- |
-| `getScrollContainer` | `() => HTMLDivElement \| null`       | Returns the scrollable container element |
-| `scrollTo`           | `(options: ScrollToOptions) => void` | Scrolls to a specific position           |
-| `scrollTop`          | `number`                             | Gets the current scroll top position     |
-| `scrollHeight`       | `number`                             | Gets the total scrollable height         |
-| `clientHeight`       | `number`                             | Gets the visible height of the container |
-
-### ScrollToOptions
-
-```typescript
-interface ScrollToOptions {
-    top?: number;
-    left?: number;
-    behavior?: "auto" | "smooth";
-}
-```
-
-## Behavior
-
--   **Auto-hide**: The scrollbar automatically hides after 0.7 seconds of inactivity during wheel scroll or regular scrolling
--   **Hover reveal**: Hovering over the right edge (20px wide area) shows the scrollbar with track background
--   **Interactive scrolling**:
-    -   Click on the track to jump to that position
-    -   Drag the thumb for precise scrolling
-    -   Mouse wheel scrolling works normally
--   **Responsive**: Automatically adapts to content and container size changes
--   **Smooth animations**: All show/hide transitions are smoothly animated
-
-## Styling
-
-The component uses CSS-in-JS for styling and automatically hides native scrollbars. The custom scrollbar has:
-
--   **Track**: Semi-transparent background that appears on hover/interaction
--   **Thumb**: The draggable scrollbar handle with hover effects
--   **Positioning**: 8px wide, positioned 2px from the right edge
--   **Colors**: Configurable through CSS custom properties (future enhancement)
 
 ## Browser Support
 
@@ -199,12 +128,12 @@ The component uses CSS-in-JS for styling and automatically hides native scrollba
 -   Safari: Full support
 -   Mobile browsers: Touch scrolling supported, overlay scrollbar hidden on mobile
 
-## Performance
+## 브라우저 지원
 
--   Uses `ResizeObserver` for efficient size change detection
--   Debounced scroll events to prevent excessive re-renders
--   Passive event listeners where possible
--   Minimal DOM manipulation and optimized for 60fps animations
+-   Chrome/Edge: 완전 지원
+-   Firefox: 완전 지원
+-   Safari: 완전 지원
+-   모바일 브라우저: 터치 스크롤 지원, 모바일에서는 오버레이 스크롤바 숨김
 
 ## License
 

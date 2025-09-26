@@ -1,9 +1,6 @@
 /**
  * OverlayScrollbar.tsx
  *
- * A React component that provides a custom overlay scrollbar with smooth animations and auto-hide functionality
- *
- * @license MIT
  * @copyright 2025 KIM YOUNG JIN (ehfuse@gmail.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +27,7 @@ import React, {
     useEffect,
     useState,
     useCallback,
+    useMemo,
     ReactNode,
     forwardRef,
     useImperativeHandle,
@@ -40,6 +38,21 @@ interface OverlayScrollbarProps {
     style?: React.CSSProperties;
     children: ReactNode;
     onScroll?: (event: Event) => void;
+    scrollbarWidth?: number; // 스크롤바 썸과 트랙의 너비 (기본값: 8px) - deprecated, use trackWidth/thumbWidth instead
+    thumbRadius?: number; // 스크롤바 썸의 border-radius (기본값: thumbWidth / 2)
+    showArrows?: boolean; // 스크롤 화살표 표시 여부 (기본값: false)
+    arrowStep?: number; // 화살표 클릭시 스크롤 이동 거리 (기본값: 50px)
+    trackWidth?: number; // 호버 영역인 트랙의 너비 (기본값: 16px)
+    thumbWidth?: number; // 썸과 트랙 배경의 너비 (기본값: 8px)
+    thumbMinHeight?: number; // 썸의 최소 높이 (기본값: 50px)
+    trackColor?: string; // 트랙 배경 색상 (기본값: "rgba(128, 128, 128, 0.1)")
+    thumbColor?: string; // 썸 색상 (기본값: "rgba(128, 128, 128, 0.6)")
+    thumbActiveColor?: string; // 드래그 중 썸 색상 (기본값: "rgba(128, 128, 128, 0.9)")
+    arrowColor?: string; // 화살표 색상 (기본값: "rgba(128, 128, 128, 0.8)")
+    arrowActiveColor?: string; // 화살표 hover 시 색상 (기본값: "rgba(64, 64, 64, 1.0)")
+    // 자동 숨김 시간 설정
+    hideDelay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
+    hideDelayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본값: 700ms)
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -51,227 +64,112 @@ export interface OverlayScrollbarRef {
     clientHeight: number;
 }
 
-export const OverlayScrollbar = forwardRef<
-    OverlayScrollbarRef,
-    OverlayScrollbarProps
->(({ children, onScroll, className, style }, ref) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
-    const scrollbarRef = useRef<HTMLDivElement>(null);
-    const thumbRef = useRef<HTMLDivElement>(null);
-
-    // 웹킷 스크롤바 숨김을 위한 스타일
-    useEffect(() => {
-        const style = document.createElement("style");
-        style.textContent = `
-                .overlay-scrollbar-container::-webkit-scrollbar {
-                    display: none !important;
-                    width: 0 !important;
-                    height: 0 !important;
-                    background: transparent !important;
-                }
-                .overlay-scrollbar-container::-webkit-scrollbar-track {
-                    display: none !important;
-                }
-                .overlay-scrollbar-container::-webkit-scrollbar-thumb {
-                    display: none !important;
-                }
-                .overlay-scrollbar-container::-webkit-scrollbar-corner {
-                    display: none !important;
-                }
-                .overlay-scrollbar-container * {
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
-                }
-                .overlay-scrollbar-container *::-webkit-scrollbar {
-                    display: none !important;
-                    width: 0 !important;
-                    height: 0 !important;
-                }
-            `;
-        document.head.appendChild(style);
-
-        return () => {
-            document.head.removeChild(style);
-        };
-    }, []);
-
-    const [scrollbarVisible, setScrollbarVisible] = useState(false);
-    const [trackVisible, setTrackVisible] = useState(false); // 트랙 표시 상태 추가
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ y: 0, scrollTop: 0 });
-    const [thumbHeight, setThumbHeight] = useState(0);
-    const [thumbTop, setThumbTop] = useState(0);
-
-    // 스크롤바 표시/숨김 타이머
-    const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // ref를 통해 외부에서 스크롤 컨테이너에 접근할 수 있도록 함
-    useImperativeHandle(
-        ref,
-        () => ({
-            getScrollContainer: () => containerRef.current,
-            scrollTo: (options: ScrollToOptions) => {
-                if (containerRef.current) {
-                    containerRef.current.scrollTo(options);
-                }
-            },
-            get scrollTop() {
-                return containerRef.current?.scrollTop || 0;
-            },
-            get scrollHeight() {
-                return containerRef.current?.scrollHeight || 0;
-            },
-            get clientHeight() {
-                return containerRef.current?.clientHeight || 0;
-            },
-        }),
-        []
-    );
-
-    // 스크롤바 숨김 타이머 취소
-    const clearHideTimer = useCallback(() => {
-        if (hideTimeoutRef.current) {
-            clearTimeout(hideTimeoutRef.current);
-            hideTimeoutRef.current = null;
-        }
-    }, []);
-
-    // 스크롤바 숨김 타이머 설정
-    const setHideTimer = useCallback(
-        (delay: number) => {
-            clearHideTimer(); // 기존 타이머 취소
-            hideTimeoutRef.current = setTimeout(() => {
-                if (!isDragging) {
-                    setScrollbarVisible(false);
-                    setTrackVisible(false);
-                }
-                hideTimeoutRef.current = null;
-            }, delay);
+const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
+    (
+        {
+            className = "",
+            style = {},
+            children,
+            onScroll,
+            scrollbarWidth = 8, // deprecated
+            thumbRadius,
+            showArrows = false,
+            arrowStep = 50,
+            trackWidth = 16,
+            thumbWidth = 8,
+            thumbMinHeight = 50,
+            trackColor = "rgba(128, 128, 128, 0.1)",
+            thumbColor = "rgba(128, 128, 128, 0.6)",
+            thumbActiveColor = "rgba(128, 128, 128, 0.9)",
+            arrowColor = "rgba(128, 128, 128, 0.6)",
+            arrowActiveColor = "rgba(64, 64, 64, 1.0)",
+            hideDelay = 1500,
+            hideDelayOnWheel = 700,
         },
-        [isDragging, clearHideTimer]
-    );
+        ref
+    ) => {
+        const containerRef = useRef<HTMLDivElement>(null);
+        const contentRef = useRef<HTMLDivElement>(null);
+        const scrollbarRef = useRef<HTMLDivElement>(null);
+        const thumbRef = useRef<HTMLDivElement>(null);
 
-    // 스크롤 가능 여부 체크 함수
-    const isScrollable = useCallback(() => {
-        if (!containerRef.current || !contentRef.current) return false;
-        const container = containerRef.current;
-        const content = contentRef.current;
-        return content.scrollHeight > container.clientHeight + 2;
-    }, []);
-
-    // 스크롤바 크기 및 위치 계산
-    const updateScrollbar = useCallback(() => {
-        if (!containerRef.current || !contentRef.current) return;
-
-        const container = containerRef.current;
-        const content = contentRef.current;
-
-        const containerHeight = container.clientHeight;
-        const contentHeight = content.scrollHeight;
-        const scrollTop = container.scrollTop;
-
-        // console.log("스크롤바 업데이트:", {
-        //     containerHeight,
-        //     contentHeight,
-        //     scrollTop,
-        //     hasScrollableContent: contentHeight > containerHeight,
-        // });
-
-        // 스크롤 가능한 콘텐츠가 있는지 확인 (여유분 2px 추가로 더 정확한 판단)
-        if (contentHeight <= containerHeight + 2) {
-            // console.log("스크롤 불가능한 콘텐츠, 스크롤바 숨김");
-            setScrollbarVisible(false);
-            setTrackVisible(false);
-            clearHideTimer(); // 타이머도 정리
-            return;
-        }
-
-        // 썸 높이 계산 (최소 20px, 최대 컨테이너의 90%)
-        const thumbHeightRatio = containerHeight / contentHeight;
-        const calculatedThumbHeight = Math.max(
-            20,
-            Math.min(containerHeight * 0.9, containerHeight * thumbHeightRatio)
+        // 기본 상태들
+        const [scrollbarVisible, setScrollbarVisible] = useState(false);
+        const [isDragging, setIsDragging] = useState(false);
+        const [dragStart, setDragStart] = useState({ y: 0, scrollTop: 0 });
+        const [thumbHeight, setThumbHeight] = useState(0);
+        const [thumbTop, setThumbTop] = useState(0);
+        const [activeArrow, setActiveArrow] = useState<"up" | "down" | null>(
+            null
+        );
+        const [hoveredArrow, setHoveredArrow] = useState<"up" | "down" | null>(
+            null
         );
 
-        // 썸 위치 계산
-        const scrollRatio = scrollTop / (contentHeight - containerHeight);
-        const maxThumbTop = containerHeight - calculatedThumbHeight;
-        const calculatedThumbTop = scrollRatio * maxThumbTop;
+        // 초기 마운트 시 hover 방지용
+        const [isInitialized, setIsInitialized] = useState(false);
 
-        // console.log("썸 계산:", {
-        //     thumbHeightRatio,
-        //     calculatedThumbHeight,
-        //     scrollRatio,
-        //     calculatedThumbTop,
-        //     maxThumbTop,
-        // });
+        // 휠 스크롤 감지용
+        const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        const [isWheelScrolling, setIsWheelScrolling] = useState(false);
 
-        setThumbHeight(calculatedThumbHeight);
-        setThumbTop(calculatedThumbTop);
-    }, []);
+        // 숨김 타이머
+        const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // 썸 드래그 시작
-    const handleThumbMouseDown = useCallback(
-        (event: React.MouseEvent) => {
-            event.preventDefault();
-            event.stopPropagation();
+        // ref를 통해 외부에서 스크롤 컨테이너에 접근할 수 있도록 함
+        useImperativeHandle(
+            ref,
+            () => ({
+                getScrollContainer: () => containerRef.current,
+                scrollTo: (options: ScrollToOptions) => {
+                    if (containerRef.current) {
+                        containerRef.current.scrollTo(options);
+                    }
+                },
+                get scrollTop() {
+                    return containerRef.current?.scrollTop || 0;
+                },
+                get scrollHeight() {
+                    return containerRef.current?.scrollHeight || 0;
+                },
+                get clientHeight() {
+                    return containerRef.current?.clientHeight || 0;
+                },
+            }),
+            []
+        );
 
-            if (!containerRef.current) return;
-
-            setIsDragging(true);
-            setDragStart({
-                y: event.clientY,
-                scrollTop: containerRef.current.scrollTop,
-            });
-
-            setScrollbarVisible(true);
-            setTrackVisible(true); // 드래그 시 트랙 표시
-            clearHideTimer(); // 드래그 중에는 타이머 취소
-        },
-        [clearHideTimer]
-    );
-
-    // 썸 드래그 중
-    const handleMouseMove = useCallback(
-        (event: MouseEvent) => {
-            if (!isDragging || !containerRef.current || !contentRef.current)
-                return;
-
-            event.preventDefault();
-
-            const container = containerRef.current;
-            const content = contentRef.current;
-            const containerHeight = container.clientHeight;
-            const contentHeight = content.scrollHeight;
-
-            const deltaY = event.clientY - dragStart.y;
-            const scrollableHeight = contentHeight - containerHeight;
-            const maxThumbTop = containerHeight - thumbHeight;
-
-            // 드래그 거리를 스크롤 거리로 변환
-            const scrollDelta = (deltaY / maxThumbTop) * scrollableHeight;
-            const newScrollTop = Math.max(
-                0,
-                Math.min(scrollableHeight, dragStart.scrollTop + scrollDelta)
+        // 스크롤 가능 여부 체크
+        const isScrollable = useCallback(() => {
+            if (!containerRef.current || !contentRef.current) return false;
+            return (
+                contentRef.current.scrollHeight >
+                containerRef.current.clientHeight + 2
             );
+        }, []);
 
-            container.scrollTop = newScrollTop;
-            updateScrollbar();
-        },
-        [isDragging, dragStart, thumbHeight, updateScrollbar]
-    );
+        // 타이머 정리
+        const clearHideTimer = useCallback(() => {
+            if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+                hideTimeoutRef.current = null;
+            }
+        }, []);
 
-    // 썸 드래그 종료
-    const handleMouseUp = useCallback(() => {
-        setIsDragging(false);
-        setTrackVisible(false); // 드래그 종료 시 트랙 숨김
-        setHideTimer(2000); // 2초 후 숨김
-    }, [setHideTimer]);
+        // 스크롤바 숨기기 타이머
+        const setHideTimer = useCallback(
+            (delay: number) => {
+                clearHideTimer();
+                hideTimeoutRef.current = setTimeout(() => {
+                    setScrollbarVisible(false);
+                    hideTimeoutRef.current = null;
+                }, delay);
+            },
+            [clearHideTimer, isDragging]
+        );
 
-    // 스크롤바 트랙 클릭
-    const handleTrackClick = useCallback(
-        (event: React.MouseEvent) => {
+        // 스크롤바 위치 및 크기 업데이트
+        const updateScrollbar = useCallback(() => {
             if (
                 !containerRef.current ||
                 !contentRef.current ||
@@ -279,294 +177,541 @@ export const OverlayScrollbar = forwardRef<
             )
                 return;
 
-            const scrollbar = scrollbarRef.current;
-            const rect = scrollbar.getBoundingClientRect();
-            const clickY = event.clientY - rect.top;
-
             const container = containerRef.current;
             const content = contentRef.current;
             const containerHeight = container.clientHeight;
             const contentHeight = content.scrollHeight;
+            const scrollTop = container.scrollTop;
 
-            const scrollRatio = clickY / containerHeight;
-            const newScrollTop =
-                scrollRatio * (contentHeight - containerHeight);
-
-            container.scrollTop = Math.max(
-                0,
-                Math.min(contentHeight - containerHeight, newScrollTop)
-            );
-            updateScrollbar();
-
-            setScrollbarVisible(true);
-            setTrackVisible(true); // 클릭 시 트랙 표시
-            setHideTimer(2000); // 클릭 후 2초간 유지
-        },
-        [updateScrollbar, setHideTimer]
-    );
-
-    // 이벤트 리스너 등록
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        // 휠 이벤트 핸들러 (마우스 휠 스크롤 감지)
-        const handleWheel = () => {
-            clearHideTimer(); // 먼저 기존 타이머 취소
-            setScrollbarVisible(true);
-            // 휠 스크롤 시에는 트랙 숨김 (thumb만 표시)
-            updateScrollbar();
-            setHideTimer(700); // 0.7초 후 숨김
-        };
-
-        // 스크롤 이벤트 디바운스
-        const debouncedScroll = (event: Event) => {
-            clearHideTimer(); // 먼저 기존 타이머 취소
-            setScrollbarVisible(true);
-            // 스크롤 시에도 트랙 숨김 (thumb만 표시)
-            updateScrollbar();
-            setHideTimer(700); // 0.7초 후 숨김
-
-            if (onScroll) {
-                onScroll(event);
+            // 스크롤 불가능하면 숨김
+            if (contentHeight <= containerHeight + 2) {
+                setScrollbarVisible(false);
+                clearHideTimer();
+                return;
             }
-        };
 
-        container.addEventListener("scroll", debouncedScroll, {
-            passive: true,
-        });
-        container.addEventListener("wheel", handleWheel, { passive: true });
+            // 화살표와 간격 공간 계산 (화살표 + 위아래여백 4px + 화살표간격 4px씩, 화살표 없어도 위아래 4px씩 여백)
+            const arrowSpace = showArrows ? scrollbarWidth * 2 + 16 : 8;
 
-        return () => {
-            container.removeEventListener("scroll", debouncedScroll);
-            container.removeEventListener("wheel", handleWheel);
-        };
-    }, [updateScrollbar, isDragging, onScroll, clearHideTimer, setHideTimer]);
+            // 썸 높이 계산 (사용자 설정 최소 높이 사용, 화살표 공간 제외)
+            const availableHeight = containerHeight - arrowSpace;
+            const scrollRatio = containerHeight / contentHeight;
+            const calculatedThumbHeight = Math.max(
+                availableHeight * scrollRatio,
+                thumbMinHeight
+            );
 
-    // 마우스 이벤트 리스너 등록 (드래그)
-    useEffect(() => {
-        if (isDragging) {
-            document.addEventListener("mousemove", handleMouseMove);
-            document.addEventListener("mouseup", handleMouseUp);
+            // 썸 위치 계산 (화살표와 간격 공간 제외)
+            const scrollableHeight = contentHeight - containerHeight;
+            const thumbScrollableHeight =
+                availableHeight - calculatedThumbHeight;
+            const calculatedThumbTop =
+                scrollableHeight > 0
+                    ? (scrollTop / scrollableHeight) * thumbScrollableHeight
+                    : 0;
+
+            setThumbHeight(calculatedThumbHeight);
+            setThumbTop(calculatedThumbTop);
+        }, [clearHideTimer, showArrows, scrollbarWidth, thumbMinHeight]);
+
+        // 썸 드래그 시작
+        const handleThumbMouseDown = useCallback(
+            (event: React.MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (!containerRef.current) return;
+
+                setIsDragging(true);
+                setDragStart({
+                    y: event.clientY,
+                    scrollTop: containerRef.current.scrollTop,
+                });
+
+                clearHideTimer();
+                setScrollbarVisible(true);
+            },
+            [clearHideTimer]
+        );
+
+        // 썸 드래그 중
+        const handleMouseMove = useCallback(
+            (event: MouseEvent) => {
+                if (!isDragging || !containerRef.current || !contentRef.current)
+                    return;
+
+                const container = containerRef.current;
+                const content = contentRef.current;
+                const containerHeight = container.clientHeight;
+                const contentHeight = content.scrollHeight;
+                const scrollableHeight = contentHeight - containerHeight;
+
+                const deltaY = event.clientY - dragStart.y;
+                const thumbScrollableHeight = containerHeight - thumbHeight;
+                const scrollDelta =
+                    (deltaY / thumbScrollableHeight) * scrollableHeight;
+
+                const newScrollTop = Math.max(
+                    0,
+                    Math.min(
+                        scrollableHeight,
+                        dragStart.scrollTop + scrollDelta
+                    )
+                );
+
+                container.scrollTop = newScrollTop;
+                updateScrollbar();
+            },
+            [isDragging, dragStart, thumbHeight, updateScrollbar]
+        );
+
+        // 썸 드래그 종료
+        const handleMouseUp = useCallback(() => {
+            setIsDragging(false);
+            if (isScrollable()) {
+                setHideTimer(hideDelay); // 기본 숨김 시간 적용
+            }
+        }, [isScrollable, setHideTimer, hideDelay]);
+
+        // 트랙 클릭으로 스크롤 점프
+        const handleTrackClick = useCallback(
+            (event: React.MouseEvent) => {
+                if (
+                    !containerRef.current ||
+                    !contentRef.current ||
+                    !scrollbarRef.current
+                )
+                    return;
+
+                const scrollbar = scrollbarRef.current;
+                const rect = scrollbar.getBoundingClientRect();
+                const clickY = event.clientY - rect.top;
+
+                const container = containerRef.current;
+                const content = contentRef.current;
+                const containerHeight = container.clientHeight;
+                const contentHeight = content.scrollHeight;
+
+                const scrollRatio = clickY / containerHeight;
+                const newScrollTop =
+                    scrollRatio * (contentHeight - containerHeight);
+
+                container.scrollTop = Math.max(
+                    0,
+                    Math.min(contentHeight - containerHeight, newScrollTop)
+                );
+                updateScrollbar();
+
+                setScrollbarVisible(true);
+                setHideTimer(hideDelay);
+            },
+            [updateScrollbar, setHideTimer, hideDelay]
+        );
+
+        // 위쪽 화살표 클릭 핸들러
+        const handleUpArrowClick = useCallback(
+            (event: React.MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (!containerRef.current) return;
+
+                const newScrollTop = Math.max(
+                    0,
+                    containerRef.current.scrollTop - arrowStep
+                );
+
+                containerRef.current.scrollTop = newScrollTop;
+                updateScrollbar();
+
+                setScrollbarVisible(true);
+                setHideTimer(hideDelay);
+            },
+            [updateScrollbar, setHideTimer, arrowStep, hideDelay]
+        );
+
+        // 아래쪽 화살표 클릭 핸들러
+        const handleDownArrowClick = useCallback(
+            (event: React.MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (!containerRef.current || !contentRef.current) return;
+
+                const container = containerRef.current;
+                const content = contentRef.current;
+                const maxScrollTop =
+                    content.scrollHeight - container.clientHeight;
+                const newScrollTop = Math.min(
+                    maxScrollTop,
+                    container.scrollTop + arrowStep
+                );
+
+                container.scrollTop = newScrollTop;
+                updateScrollbar();
+
+                setScrollbarVisible(true);
+                setHideTimer(hideDelay);
+            },
+            [updateScrollbar, setHideTimer, arrowStep, hideDelay]
+        );
+
+        // 스크롤 이벤트 리스너
+        useEffect(() => {
+            const container = containerRef.current;
+            if (!container) return;
+
+            const handleScroll = (event: Event) => {
+                updateScrollbar();
+
+                // 스크롤 중에는 스크롤바 표시
+                clearHideTimer();
+                setScrollbarVisible(true);
+
+                // 휠 스크롤 중이면 빠른 숨김, 아니면 기본 숨김 시간 적용
+                const delay = isWheelScrolling ? hideDelayOnWheel : hideDelay;
+                setHideTimer(delay);
+
+                if (onScroll) {
+                    onScroll(event);
+                }
+            };
+
+            const handleWheel = () => {
+                // 휠 스크롤 상태 표시
+                setIsWheelScrolling(true);
+
+                // 기존 휠 타이머 제거
+                if (wheelTimeoutRef.current) {
+                    clearTimeout(wheelTimeoutRef.current);
+                }
+
+                // 300ms 후 휠 스크롤 상태 해제 (휠 스크롤이 끝났다고 간주)
+                wheelTimeoutRef.current = setTimeout(() => {
+                    setIsWheelScrolling(false);
+                }, 300);
+
+                clearHideTimer();
+                setScrollbarVisible(true);
+            };
+
+            container.addEventListener("scroll", handleScroll, {
+                passive: true,
+            });
+            container.addEventListener("wheel", handleWheel, {
+                passive: true,
+            });
 
             return () => {
-                document.removeEventListener("mousemove", handleMouseMove);
-                document.removeEventListener("mouseup", handleMouseUp);
-            };
-        }
-    }, [isDragging, handleMouseMove, handleMouseUp]);
-
-    // 초기 스크롤바 계산 및 스크롤 감지
-    useEffect(() => {
-        const checkAndUpdateScrollbar = () => {
-            updateScrollbar();
-
-            // 초기에 스크롤 가능한 콘텐츠가 있는지 확인
-            const container = containerRef.current;
-            const content = contentRef.current;
-
-            if (container && content) {
-                const hasScrollableContent =
-                    content.scrollHeight > container.clientHeight + 2; // 여유분 2px 추가
-                // console.log("초기 스크롤바 체크:", {
-                //     hasScrollableContent,
-                //     contentScrollHeight: content.scrollHeight,
-                //     containerClientHeight: container.clientHeight,
-                // });
-
-                if (hasScrollableContent) {
-                    // 초기에는 스크롤바를 숨김 상태로 유지 (스크롤이나 hover 시에만 표시)
-                    setScrollbarVisible(false);
-                    setTrackVisible(false);
-                } else {
-                    // 스크롤이 필요 없으면 확실히 숨김
-                    setScrollbarVisible(false);
-                    setTrackVisible(false);
+                container.removeEventListener("scroll", handleScroll);
+                container.removeEventListener("wheel", handleWheel);
+                if (wheelTimeoutRef.current) {
+                    clearTimeout(wheelTimeoutRef.current);
                 }
+            };
+        }, [
+            updateScrollbar,
+            onScroll,
+            clearHideTimer,
+            setHideTimer,
+            hideDelay,
+            hideDelayOnWheel,
+            isWheelScrolling,
+        ]);
+
+        // 전역 마우스 이벤트 리스너
+        useEffect(() => {
+            if (isDragging) {
+                document.addEventListener("mousemove", handleMouseMove);
+                document.addEventListener("mouseup", handleMouseUp);
+                return () => {
+                    document.removeEventListener("mousemove", handleMouseMove);
+                    document.removeEventListener("mouseup", handleMouseUp);
+                };
             }
-        };
+        }, [isDragging, handleMouseMove, handleMouseUp]);
 
-        // 차트 렌더링을 고려하여 더 긴 지연시간 적용
-        const timeoutId = setTimeout(checkAndUpdateScrollbar, 200);
+        // 초기 스크롤바 업데이트
+        useEffect(() => {
+            updateScrollbar();
+        }, [updateScrollbar]);
 
-        return () => clearTimeout(timeoutId);
-    }, [updateScrollbar, children, isDragging]);
+        // 컴포넌트 초기화 완료 표시 (hover 이벤트 활성화용)
+        useEffect(() => {
+            const timer = setTimeout(() => {
+                setIsInitialized(true);
+            }, 100); // 100ms 후 초기화 완료
 
-    // 리사이즈 옵저버
-    useEffect(() => {
-        const container = containerRef.current;
-        const content = contentRef.current;
+            return () => clearTimeout(timer);
+        }, []);
 
-        if (!container || !content) return;
+        // Resize observer로 크기 변경 감지
+        useEffect(() => {
+            if (!containerRef.current || !contentRef.current) return;
 
-        const resizeObserver = new ResizeObserver(() => {
-            // 차트 렌더링 지연을 고려하여 디바운스 적용
-            setTimeout(() => {
+            const resizeObserver = new ResizeObserver(() => {
                 updateScrollbar();
-            }, 100);
-        });
+            });
 
-        resizeObserver.observe(container);
-        resizeObserver.observe(content);
+            resizeObserver.observe(containerRef.current);
+            resizeObserver.observe(contentRef.current);
 
-        return () => {
-            resizeObserver.disconnect();
-        };
-    }, [updateScrollbar]);
+            return () => resizeObserver.disconnect();
+        }, [updateScrollbar]);
 
-    // 컴포넌트 언마운트 시 타이머 정리
-    useEffect(() => {
-        return () => {
-            if (hideTimeoutRef.current) {
-                clearTimeout(hideTimeoutRef.current);
+        // 계산된 값들을 메모이제이션하여 안정화
+        const { finalThumbWidth, finalTrackWidth } = useMemo(() => {
+            const computedThumbWidth =
+                thumbWidth !== undefined ? thumbWidth : scrollbarWidth;
+            let computedTrackWidth =
+                trackWidth !== undefined ? trackWidth : scrollbarWidth * 2;
+
+            // thumbWidth가 trackWidth보다 크거나 같으면 trackWidth를 thumbWidth와 같게 설정
+            if (computedThumbWidth >= computedTrackWidth) {
+                computedTrackWidth = computedThumbWidth;
             }
-        };
-    }, []);
 
-    return (
-        <div
-            className={`overlay-scrollbar ${className || ""}`}
-            style={{
-                position: "relative",
-                overflow: "hidden",
-                display: "flex",
-                flexGrow: 1,
-                width: "100%",
-                ...style,
-            }}
-        >
-            {/* 스크롤 가능한 콘텐츠 영역 */}
+            return {
+                finalThumbWidth: computedThumbWidth,
+                finalTrackWidth: computedTrackWidth,
+            };
+        }, [thumbWidth, trackWidth, scrollbarWidth]);
+
+        // 썸 radius 계산 (기본값: thumbWidth / 2)
+        const calculatedThumbRadius =
+            thumbRadius !== undefined ? thumbRadius : finalThumbWidth / 2;
+
+        // 화살표 색상 계산 (기본값: 독립적인 색상)
+        const finalArrowColor = arrowColor || "rgba(128, 128, 128, 0.8)";
+        const finalArrowActiveColor =
+            arrowActiveColor || "rgba(128, 128, 128, 1.0)";
+
+        // 웹킷 스크롤바 숨기기용 CSS 동적 주입
+        useEffect(() => {
+            const styleId = "overlay-scrollbar-webkit-hide";
+
+            // 이미 스타일이 있으면 제거
+            const existingStyle = document.getElementById(styleId);
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+
+            const style = document.createElement("style");
+            style.id = styleId;
+            style.textContent = `
+                .overlay-scrollbar-container::-webkit-scrollbar {
+                    display: none !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                }
+                .overlay-scrollbar-container::-webkit-scrollbar-track {
+                    display: none !important;
+                }
+                .overlay-scrollbar-container::-webkit-scrollbar-thumb {
+                    display: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+
+            return () => {
+                const styleToRemove = document.getElementById(styleId);
+                if (styleToRemove) {
+                    styleToRemove.remove();
+                }
+            };
+        }, []);
+
+        return (
             <div
-                ref={containerRef}
-                className="overlay-scrollbar-container"
-                style={{
-                    display: "flex",
-                    flexGrow: 1,
-                    overflow: "auto",
-                    scrollbarWidth: "none" as any, // Firefox
-                    msOverflowStyle: "none" as any, // IE/Edge
-                }}
+                className={`overlay-scrollbar-wrapper ${className}`}
+                style={{ position: "relative", ...style }}
             >
-                <div ref={contentRef} style={{ height: "100%", width: "100%" }}>
-                    {children}
-                </div>
-            </div>
-
-            {/* 스크롤바 hover 영역 (넓은 영역) */}
-            <div
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    width: 20, // 20px 넓은 hover 영역
-                    height: "100%",
-                    zIndex: 5,
-                    pointerEvents: "auto",
-                }}
-                onMouseEnter={() => {
-                    // 스크롤 가능한 경우에만 스크롤바 표시
-                    if (isScrollable()) {
-                        clearHideTimer();
-                        setScrollbarVisible(true);
-                        setTrackVisible(true); // hover 시 트랙까지 표시
-                    }
-                }}
-                onMouseLeave={() => {
-                    // 스크롤바 hover 영역에서 벗어남 시
-                    if (!isDragging && isScrollable()) {
-                        setTrackVisible(false); // 트랙 숨김
-                        setHideTimer(1000); // 1초 후 숨김
-                    }
-                }}
-            />
-
-            {/* 커스텀 스크롤바 */}
-            <div
-                ref={scrollbarRef}
-                onClick={handleTrackClick}
-                onMouseEnter={() => {
-                    // 스크롤 가능한 경우에만 스크롤바 영역에 hover 시 타이머 취소하고 표시 유지
-                    if (isScrollable()) {
-                        clearHideTimer();
-                        setScrollbarVisible(true);
-                        setTrackVisible(true);
-                    }
-                }}
-                onMouseLeave={() => {
-                    // 스크롤바 영역에서 벗어나면 일정 시간 후 숨김
-                    if (!isDragging && isScrollable()) {
-                        setHideTimer(1000);
-                    }
-                }}
-                className={`overlay-scrollbar-track ${
-                    scrollbarVisible ? "visible" : ""
-                }`}
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 2,
-                    width: 8,
-                    height: "100%",
-                    opacity: scrollbarVisible ? 1 : 0,
-                    transition: "opacity 0.3s ease-in-out",
-                    pointerEvents: scrollbarVisible ? "auto" : "none",
-                    zIndex: 10,
-                    cursor: "pointer",
-                    borderRadius: "4px",
-                    // trackVisible 상태에 따라 트랙 배경 표시
-                    backgroundColor: trackVisible
-                        ? "rgba(200, 200, 200, 0.3)"
-                        : "transparent",
-                }}
-                onMouseOver={(e) => {
-                    (e.target as HTMLElement).style.backgroundColor =
-                        "rgba(0, 0, 0, 0.1)";
-                }}
-                onMouseOut={(e) => {
-                    (e.target as HTMLElement).style.backgroundColor =
-                        trackVisible
-                            ? "rgba(200, 200, 200, 0.3)"
-                            : "transparent";
-                }}
-            >
-                {/* 스크롤바 썸 */}
+                {/* 스크롤 컨테이너 */}
                 <div
-                    ref={thumbRef}
-                    onMouseDown={handleThumbMouseDown}
+                    ref={containerRef}
+                    className="overlay-scrollbar-container"
                     style={{
-                        position: "absolute",
-                        top: `${thumbTop}px`,
-                        left: 0,
-                        width: "100%",
-                        height: `${Math.max(thumbHeight, 30)}px`, // 최소 30px 보장
-                        backgroundColor: isDragging
-                            ? "rgba(0, 0, 0, 0.7)"
-                            : "rgba(0, 0, 0, 0.5)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        minHeight: "30px", // CSS로도 최소 높이 보장
-                        transition: isDragging
-                            ? "none"
-                            : "background-color 0.2s ease, transform 0.1s ease",
-                        transform: isDragging ? "scaleX(1.2)" : "scaleX(1)",
-                        opacity: isDragging ? 1 : 0.4,
+                        height: "100%",
+                        overflow: "auto", // 네이티브 스크롤 기능 유지
+                        // 브라우저 기본 스크롤바만 숨기기
+                        scrollbarWidth: "none", // Firefox
+                        msOverflowStyle: "none", // IE/Edge
                     }}
-                    onMouseOver={(e) => {
-                        (e.target as HTMLElement).style.opacity = "1";
-                        (e.target as HTMLElement).style.transform =
-                            "scaleX(1.1)";
-                    }}
-                    onMouseOut={(e) => {
-                        if (!isDragging) {
-                            (e.target as HTMLElement).style.opacity = "0.4";
-                            (e.target as HTMLElement).style.transform =
-                                "scaleX(1)";
+                >
+                    <div
+                        ref={contentRef}
+                        className="overlay-scrollbar-content"
+                        style={{
+                            minHeight: "100%",
+                        }}
+                    >
+                        {children}
+                    </div>
+                </div>
+
+                {/* 커스텀 스크롤바 */}
+                <div
+                    ref={scrollbarRef}
+                    className="overlay-scrollbar-track"
+                    onMouseEnter={() => {
+                        console.log("🔍 트랙 mouseEnter");
+                        if (isScrollable()) {
+                            console.log("✅ 트랙 hover로 스크롤바 표시");
+                            clearHideTimer();
+                            setScrollbarVisible(true);
                         }
                     }}
-                />
+                    onMouseLeave={() => {
+                        console.log("🔍 트랙 mouseLeave");
+                        if (!isDragging && isScrollable()) {
+                            setHideTimer(hideDelay);
+                        }
+                    }}
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0, // 완전히 오른쪽에 붙임
+                        width: `${finalTrackWidth}px`, // hover 영역 너비
+                        height: "100%",
+                        opacity: scrollbarVisible ? 1 : 0,
+                        transition: "opacity 0.2s ease-in-out",
+                        cursor: "pointer",
+                        zIndex: 1000,
+                        pointerEvents: "auto", // 항상 이벤트 활성화 (hover 감지용)
+                    }}
+                >
+                    {/* 스크롤바 트랙 배경 */}
+                    <div
+                        className="overlay-scrollbar-track-background"
+                        onClick={handleTrackClick}
+                        style={{
+                            position: "absolute",
+                            top: showArrows
+                                ? `${finalThumbWidth + 8}px`
+                                : "4px",
+                            right: `${
+                                (finalTrackWidth - finalThumbWidth) / 2
+                            }px`, // 트랙 가운데 정렬
+                            width: `${finalThumbWidth}px`,
+                            height: showArrows
+                                ? `calc(100% - ${finalThumbWidth * 2 + 16}px)`
+                                : "calc(100% - 8px)",
+                            backgroundColor: trackColor,
+                            borderRadius: `${calculatedThumbRadius}px`,
+                            cursor: "pointer",
+                        }}
+                    />
+
+                    {/* 스크롤바 썸 */}
+                    <div
+                        ref={thumbRef}
+                        className="overlay-scrollbar-thumb"
+                        onMouseDown={handleThumbMouseDown}
+                        style={{
+                            position: "absolute",
+                            top: `${
+                                (showArrows ? finalThumbWidth + 8 : 4) +
+                                thumbTop
+                            }px`,
+                            right: `${
+                                (finalTrackWidth - finalThumbWidth) / 2
+                            }px`, // 트랙 가운데 정렬
+                            width: `${finalThumbWidth}px`,
+                            height: `${Math.max(
+                                thumbHeight,
+                                thumbMinHeight
+                            )}px`,
+                            backgroundColor: isDragging
+                                ? thumbActiveColor
+                                : thumbColor,
+                            borderRadius: `${calculatedThumbRadius}px`,
+                            cursor: "pointer",
+                            transition: isDragging
+                                ? "none"
+                                : "background-color 0.2s ease-in-out",
+                        }}
+                    />
+                </div>
+
+                {/* 위쪽 화살표 버튼 */}
+                {showArrows && (
+                    <div
+                        className="overlay-scrollbar-up-arrow"
+                        onClick={handleUpArrowClick}
+                        onMouseEnter={() => setHoveredArrow("up")}
+                        onMouseLeave={() => setHoveredArrow(null)}
+                        style={{
+                            position: "absolute",
+                            top: "4px",
+                            right: `${
+                                (finalTrackWidth - finalThumbWidth) / 2
+                            }px`, // 트랙 가운데 정렬
+                            width: `${finalThumbWidth}px`,
+                            height: `${finalThumbWidth}px`,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: `${Math.max(
+                                finalThumbWidth * 0.75,
+                                8
+                            )}px`,
+                            color:
+                                hoveredArrow === "up"
+                                    ? finalArrowActiveColor
+                                    : finalArrowColor,
+                            userSelect: "none",
+                            zIndex: 1001,
+                            opacity: scrollbarVisible ? 1 : 0,
+                            transition:
+                                "opacity 0.2s ease-in-out, color 0.15s ease-in-out",
+                        }}
+                    >
+                        ▲
+                    </div>
+                )}
+
+                {/* 아래쪽 화살표 버튼 */}
+                {showArrows && (
+                    <div
+                        className="overlay-scrollbar-down-arrow"
+                        onClick={handleDownArrowClick}
+                        onMouseEnter={() => setHoveredArrow("down")}
+                        onMouseLeave={() => setHoveredArrow(null)}
+                        style={{
+                            position: "absolute",
+                            bottom: "4px",
+                            right: `${
+                                (finalTrackWidth - finalThumbWidth) / 2
+                            }px`, // 트랙 가운데 정렬
+                            width: `${finalThumbWidth}px`,
+                            height: `${finalThumbWidth}px`,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: `${Math.max(
+                                finalThumbWidth * 0.75,
+                                8
+                            )}px`,
+                            color:
+                                hoveredArrow === "down"
+                                    ? finalArrowActiveColor
+                                    : finalArrowColor,
+                            userSelect: "none",
+                            zIndex: 1001,
+                            opacity: scrollbarVisible ? 1 : 0,
+                            transition:
+                                "opacity 0.2s ease-in-out, color 0.15s ease-in-out",
+                        }}
+                    >
+                        ▼
+                    </div>
+                )}
             </div>
-        </div>
-    );
-});
+        );
+    }
+);
 
 export default OverlayScrollbar;
+export { OverlayScrollbar };
