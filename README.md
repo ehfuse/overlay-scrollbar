@@ -121,6 +121,108 @@ function App() {
 }
 ```
 
+## API Reference
+
+### Types
+
+The package exports TypeScript types for better development experience:
+
+```tsx
+import {
+    OverlayScrollbar,
+    OverlayScrollbarProps,
+    OverlayScrollbarRef,
+} from "@ehfuse/overlay-scrollbar";
+```
+
+### OverlayScrollbarProps
+
+Interface for the component props:
+
+```tsx
+interface OverlayScrollbarProps {
+    className?: string;
+    style?: React.CSSProperties;
+    children: ReactNode;
+    onScroll?: (event: Event) => void;
+
+    // Sizing & Layout
+    scrollbarWidth?: number; // deprecated, use trackWidth/thumbWidth instead
+    thumbRadius?: number; // Border radius of thumb (default: thumbWidth / 2)
+    trackWidth?: number; // Width of hover area (default: 16px)
+    thumbWidth?: number; // Width of thumb and track background (default: 8px)
+    thumbMinHeight?: number; // Minimum height of thumb (default: 50px)
+
+    // Colors
+    trackColor?: string; // Track background color (default: "rgba(128, 128, 128, 0.1)")
+    thumbColor?: string; // Thumb color (default: "rgba(128, 128, 128, 0.6)")
+    thumbActiveColor?: string; // Thumb color when dragging (default: "rgba(128, 128, 128, 0.9)")
+    arrowColor?: string; // Arrow color (default: "rgba(128, 128, 128, 0.8)")
+    arrowActiveColor?: string; // Arrow color on hover (default: "rgba(64, 64, 64, 1.0)")
+
+    // Arrow Navigation
+    showArrows?: boolean; // Show arrow buttons (default: false)
+    arrowStep?: number; // Scroll distance per arrow click (default: 50px)
+
+    // Auto-hide Behavior
+    hideDelay?: number; // Default auto-hide delay (default: 1500ms)
+    hideDelayOnWheel?: number; // Auto-hide delay after wheel scroll (default: 700ms)
+}
+```
+
+### OverlayScrollbarRef
+
+Interface for component methods accessible via ref:
+
+```tsx
+interface OverlayScrollbarRef {
+    getScrollContainer: () => HTMLDivElement | null;
+    scrollTo: (options: ScrollToOptions) => void;
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+}
+```
+
+### Usage with TypeScript
+
+```tsx
+import React, { useRef } from "react";
+import {
+    OverlayScrollbar,
+    OverlayScrollbarProps,
+    OverlayScrollbarRef,
+} from "@ehfuse/overlay-scrollbar";
+
+const MyComponent: React.FC = () => {
+    const scrollRef = useRef<OverlayScrollbarRef>(null);
+
+    const scrollbarProps: OverlayScrollbarProps = {
+        showArrows: true,
+        thumbRadius: 6,
+        trackColor: "rgba(0, 0, 0, 0.1)",
+        thumbColor: "rgba(100, 100, 100, 0.7)",
+        hideDelay: 1500,
+        onScroll: (event) => {
+            console.log("Scrolled!", scrollRef.current?.scrollTop);
+        },
+    };
+
+    const handleScrollToTop = () => {
+        scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    return (
+        <div style={{ height: "400px" }}>
+            <button onClick={handleScrollToTop}>Scroll to Top</button>
+            <OverlayScrollbar ref={scrollRef} {...scrollbarProps}>
+                <div style={{ height: "1000px" }}>Your content here...</div>
+            </OverlayScrollbar>
+        </div>
+    );
+};
+```
+
 ## Browser Support
 
 -   Chrome/Edge: Full support

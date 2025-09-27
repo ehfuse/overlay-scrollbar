@@ -477,6 +477,106 @@ function Sidebar() {
 | `hideDelay`             | `number`                 | `1500`                       | 기본 자동 숨김 시간 (ms) - 드래그, 화살표 클릭, 호버 후 적용   |
 | `hideDelayOnWheel`      | `number`                 | `700`                        | 휠 스크롤 후 자동 숨김 시간 (ms) - 빠른 숨김                   |
 
+### TypeScript 타입
+
+패키지는 더 나은 개발 경험을 위해 TypeScript 타입을 제공합니다:
+
+```tsx
+import {
+    OverlayScrollbar,
+    OverlayScrollbarProps,
+    OverlayScrollbarRef,
+} from "@ehfuse/overlay-scrollbar";
+```
+
+#### OverlayScrollbarProps
+
+컴포넌트 props에 대한 인터페이스:
+
+```tsx
+interface OverlayScrollbarProps {
+    className?: string;
+    style?: React.CSSProperties;
+    children: ReactNode;
+    onScroll?: (event: Event) => void;
+
+    // 크기 및 레이아웃
+    scrollbarWidth?: number; // deprecated, trackWidth/thumbWidth 사용 권장
+    thumbRadius?: number; // 썸의 border-radius (기본값: thumbWidth / 2)
+    trackWidth?: number; // 호버 영역 너비 (기본값: 16px)
+    thumbWidth?: number; // 썸과 트랙 배경 너비 (기본값: 8px)
+    thumbMinHeight?: number; // 썸 최소 높이 (기본값: 50px)
+
+    // 색상
+    trackColor?: string; // 트랙 배경 색상 (기본값: "rgba(128, 128, 128, 0.1)")
+    thumbColor?: string; // 썸 색상 (기본값: "rgba(128, 128, 128, 0.6)")
+    thumbActiveColor?: string; // 드래그 중 썸 색상 (기본값: "rgba(128, 128, 128, 0.9)")
+    arrowColor?: string; // 화살표 색상 (기본값: "rgba(128, 128, 128, 0.8)")
+    arrowActiveColor?: string; // 화살표 호버 색상 (기본값: "rgba(64, 64, 64, 1.0)")
+
+    // 화살표 네비게이션
+    showArrows?: boolean; // 화살표 버튼 표시 (기본값: false)
+    arrowStep?: number; // 화살표 클릭당 스크롤 거리 (기본값: 50px)
+
+    // 자동 숨김 동작
+    hideDelay?: number; // 기본 자동 숨김 지연 시간 (기본값: 1500ms)
+    hideDelayOnWheel?: number; // 휠 스크롤 후 자동 숨김 지연 시간 (기본값: 700ms)
+}
+```
+
+#### OverlayScrollbarRef
+
+ref를 통해 접근 가능한 컴포넌트 메서드에 대한 인터페이스:
+
+```tsx
+interface OverlayScrollbarRef {
+    getScrollContainer: () => HTMLDivElement | null;
+    scrollTo: (options: ScrollToOptions) => void;
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+}
+```
+
+#### TypeScript와 함께 사용하기
+
+```tsx
+import React, { useRef } from "react";
+import {
+    OverlayScrollbar,
+    OverlayScrollbarProps,
+    OverlayScrollbarRef,
+} from "@ehfuse/overlay-scrollbar";
+
+const MyComponent: React.FC = () => {
+    const scrollRef = useRef<OverlayScrollbarRef>(null);
+
+    const scrollbarProps: OverlayScrollbarProps = {
+        showArrows: true,
+        thumbRadius: 6,
+        trackColor: "rgba(0, 0, 0, 0.1)",
+        thumbColor: "rgba(100, 100, 100, 0.7)",
+        hideDelay: 1500,
+        onScroll: (event) => {
+            console.log("스크롤됨!", scrollRef.current?.scrollTop);
+        },
+    };
+
+    const handleScrollToTop = () => {
+        scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    return (
+        <div style={{ height: "400px" }}>
+            <button onClick={handleScrollToTop}>맨 위로 스크롤</button>
+            <OverlayScrollbar ref={scrollRef} {...scrollbarProps}>
+                <div style={{ height: "1000px" }}>콘텐츠가 여기에...</div>
+            </OverlayScrollbar>
+        </div>
+    );
+};
+```
+
 ### Ref 메소드
 
 컴포넌트는 ref를 통해 여러 메소드를 제공합니다:
