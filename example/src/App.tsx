@@ -1,9 +1,12 @@
 import { useState } from "react";
 import OverlayScrollbar from "@/OverlayScrollbar";
+import SimpleTest from "./SimpleTest";
+import DialogTest from "./DialogTest";
 import "./App.css";
 
 function App() {
     const [count, setCount] = useState(0);
+    const [currentTest, setCurrentTest] = useState("original"); // original, simple, dialog
 
     // 테스트용 긴 콘텐츠 생성
     const generateLongContent = () => {
@@ -50,30 +53,93 @@ function App() {
             }}
         >
             <header style={{ padding: "20px", borderBottom: "1px solid #eee" }}>
-                <h1>OverlayScrollbar 예제</h1>
-                <div style={{ marginBottom: "10px" }}>
-                    <button onClick={() => setCount((count) => count + 1)}>
-                        클릭 횟수: {count}
+                <h1>OverlayScrollbar 테스트</h1>
+
+                <div style={{ marginBottom: "20px" }}>
+                    <button
+                        onClick={() => setCurrentTest("original")}
+                        style={{
+                            margin: "5px",
+                            padding: "10px",
+                            backgroundColor:
+                                currentTest === "original"
+                                    ? "#007bff"
+                                    : "#f0f0f0",
+                            color:
+                                currentTest === "original" ? "white" : "black",
+                            border: "none",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Original Test
+                    </button>
+                    <button
+                        onClick={() => setCurrentTest("simple")}
+                        style={{
+                            margin: "5px",
+                            padding: "10px",
+                            backgroundColor:
+                                currentTest === "simple"
+                                    ? "#007bff"
+                                    : "#f0f0f0",
+                            color: currentTest === "simple" ? "white" : "black",
+                            border: "none",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Simple Test
+                    </button>
+                    <button
+                        onClick={() => setCurrentTest("dialog")}
+                        style={{
+                            margin: "5px",
+                            padding: "10px",
+                            backgroundColor:
+                                currentTest === "dialog"
+                                    ? "#007bff"
+                                    : "#f0f0f0",
+                            color: currentTest === "dialog" ? "white" : "black",
+                            border: "none",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Dialog Test
                     </button>
                 </div>
-                <p>
-                    아래는 OverlayScrollbar 컴포넌트를 사용한 스크롤 영역입니다.
-                </p>
             </header>
 
             <div style={{ flex: 1, padding: "20px" }}>
-                <OverlayScrollbar
-                    showArrows={true}
-                    style={{
-                        height: "600px",
-                        border: "1px solid #ddd",
-                        backgroundColor: "#fff",
-                    }}
-                >
-                    <div style={{ padding: "20px" }}>
-                        {generateLongContent()}
+                {currentTest === "original" && (
+                    <div>
+                        <div style={{ marginBottom: "10px" }}>
+                            <button
+                                onClick={() => setCount((count) => count + 1)}
+                            >
+                                클릭 횟수: {count}
+                            </button>
+                        </div>
+                        <p>
+                            아래는 OverlayScrollbar 컴포넌트를 사용한 스크롤
+                            영역입니다.
+                        </p>
+
+                        <OverlayScrollbar
+                            showArrows={true}
+                            style={{
+                                height: "600px",
+                                border: "1px solid #ddd",
+                                backgroundColor: "#fff",
+                            }}
+                        >
+                            <div style={{ padding: "20px" }}>
+                                {generateLongContent()}
+                            </div>
+                        </OverlayScrollbar>
                     </div>
-                </OverlayScrollbar>
+                )}
+
+                {currentTest === "simple" && <SimpleTest />}
+                {currentTest === "dialog" && <DialogTest />}
             </div>
         </div>
     );
