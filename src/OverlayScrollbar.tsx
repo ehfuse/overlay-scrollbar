@@ -33,7 +33,7 @@ import React, {
     useImperativeHandle,
 } from "react";
 
-interface OverlayScrollbarProps {
+export interface OverlayScrollbarProps {
     className?: string;
     style?: React.CSSProperties;
     children: ReactNode;
