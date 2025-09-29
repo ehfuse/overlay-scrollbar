@@ -7,6 +7,7 @@ import "./App.css";
 function App() {
     const [count, setCount] = useState(0);
     const [currentTest, setCurrentTest] = useState("original"); // original, simple, dialog
+    const [showScrollbar, setShowScrollbar] = useState(true); // showScrollbar 제어
 
     // 테스트용 긴 콘텐츠 생성
     const generateLongContent = () => {
@@ -106,6 +107,30 @@ function App() {
                         Dialog Test
                     </button>
                 </div>
+
+                {/* showScrollbar 스위치 */}
+                <div style={{ marginTop: "10px" }}>
+                    <label
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                        }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={showScrollbar}
+                            onChange={(e) => setShowScrollbar(e.target.checked)}
+                            style={{
+                                transform: "scale(1.2)",
+                                cursor: "pointer",
+                            }}
+                        />
+                        <span style={{ fontSize: "16px", cursor: "pointer" }}>
+                            스크롤바 표시 ({showScrollbar ? "ON" : "OFF"})
+                        </span>
+                    </label>
+                </div>
             </header>
 
             <div style={{ flex: 1, padding: "20px" }}>
@@ -124,6 +149,7 @@ function App() {
                         </p>
 
                         <OverlayScrollbar
+                            showScrollbar={showScrollbar}
                             showArrows={true}
                             style={{
                                 height: "600px",
