@@ -525,14 +525,24 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         return (
             <div
                 className={`overlay-scrollbar-wrapper ${className}`}
-                style={{ position: "relative", ...style }}
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    position: "relative",
+                    minHeight: 0, // shrink 가능하도록
+                    height: "100%", // 부모의 전체 높이 사용
+                    flex: "1 1 0%", // 기본적으로 flex item으로 동작
+                    ...style, // 사용자가 flex를 override 할 수 있도록 style을 뒤에 배치
+                }}
             >
                 {/* 스크롤 컨테이너 */}
                 <div
                     ref={containerRef}
                     className="overlay-scrollbar-container"
                     style={{
-                        height: "100%",
+                        width: "100%", // 명시적 너비 설정
+                        height: "100%", // 상위 컨테이너의 전체 높이 사용
+                        minHeight: 0, // 최소 높이 보장
                         overflow: "auto", // 네이티브 스크롤 기능 유지
                         // 브라우저 기본 스크롤바만 숨기기
                         scrollbarWidth: "none", // Firefox
