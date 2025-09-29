@@ -1,9 +1,7 @@
 /**
  * OverlayScrollbar.tsx
  *
- * MIT License
- *
- * Copyright (c) 2025 KIM YOUNG JIN (ehfuse@gmail.com)
+ * @copyright 2025 KIM YOUNG JIN (ehfuse@gmail.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,13 +33,14 @@ import React, {
     useImperativeHandle,
 } from "react";
 
-export interface OverlayScrollbarProps {
+interface OverlayScrollbarProps {
     className?: string;
     style?: React.CSSProperties;
     children: ReactNode;
     onScroll?: (event: Event) => void;
     scrollbarWidth?: number; // 스크롤바 썸과 트랙의 너비 (기본값: 8px) - deprecated, use trackWidth/thumbWidth instead
     thumbRadius?: number; // 스크롤바 썸의 border-radius (기본값: thumbWidth / 2)
+    showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
     showArrows?: boolean; // 스크롤 화살표 표시 여부 (기본값: false)
     arrowStep?: number; // 화살표 클릭시 스크롤 이동 거리 (기본값: 50px)
     trackWidth?: number; // 호버 영역인 트랙의 너비 (기본값: 16px)
@@ -52,7 +51,6 @@ export interface OverlayScrollbarProps {
     thumbActiveColor?: string; // 드래그 중 썸 색상 (기본값: "rgba(128, 128, 128, 0.9)")
     arrowColor?: string; // 화살표 색상 (기본값: "rgba(128, 128, 128, 0.8)")
     arrowActiveColor?: string; // 화살표 hover 시 색상 (기본값: "rgba(64, 64, 64, 1.0)")
-    // 자동 숨김 시간 설정
     hideDelay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
     hideDelayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본값: 700ms)
 }
@@ -75,6 +73,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             onScroll,
             scrollbarWidth = 8, // deprecated
             thumbRadius,
+            showScrollbar = true,
             showArrows = false,
             arrowStep = 50,
             trackWidth = 16,
@@ -526,24 +525,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         return (
             <div
                 className={`overlay-scrollbar-wrapper ${className}`}
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    position: "relative",
-                    minHeight: 0, // shrink 가능하도록
-                    height: "100%", // 부모의 전체 높이 사용
-                    flex: "1 1 0%", // 기본적으로 flex item으로 동작
-                    ...style, // 사용자가 flex를 override 할 수 있도록 style을 뒤에 배치
-                }}
+                style={{ position: "relative", ...style }}
             >
                 {/* 스크롤 컨테이너 */}
                 <div
                     ref={containerRef}
                     className="overlay-scrollbar-container"
                     style={{
-                        width: "100%", // 명시적 너비 설정
-                        height: "100%", // 상위 컨테이너의 전체 높이 사용
-                        minHeight: 0, // 최소 높이 보장
+                        height: "100%",
                         overflow: "auto", // 네이티브 스크롤 기능 유지
                         // 브라우저 기본 스크롤바만 숨기기
                         scrollbarWidth: "none", // Firefox
@@ -562,88 +551,95 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 </div>
 
                 {/* 커스텀 스크롤바 */}
-                <div
-                    ref={scrollbarRef}
-                    className="overlay-scrollbar-track"
-                    onMouseEnter={() => {
-                        if (isScrollable()) {
-                            clearHideTimer();
-                            setScrollbarVisible(true);
-                        }
-                    }}
-                    onMouseLeave={() => {
-                        if (!isDragging && isScrollable()) {
-                            setHideTimer(hideDelay);
-                        }
-                    }}
-                    style={{
-                        position: "absolute",
-                        top: 0,
-                        right: 0, // 완전히 오른쪽에 붙임
-                        width: `${finalTrackWidth}px`, // hover 영역 너비
-                        height: "100%",
-                        opacity: scrollbarVisible ? 1 : 0,
-                        transition: "opacity 0.2s ease-in-out",
-                        cursor: "pointer",
-                        zIndex: 1000,
-                        pointerEvents: "auto", // 항상 이벤트 활성화 (hover 감지용)
-                    }}
-                >
-                    {/* 스크롤바 트랙 배경 */}
+                {showScrollbar && (
                     <div
-                        className="overlay-scrollbar-track-background"
-                        onClick={handleTrackClick}
+                        ref={scrollbarRef}
+                        className="overlay-scrollbar-track"
+                        onMouseEnter={() => {
+                            console.log("🔍 트랙 mouseEnter");
+                            if (isScrollable()) {
+                                console.log("✅ 트랙 hover로 스크롤바 표시");
+                                clearHideTimer();
+                                setScrollbarVisible(true);
+                            }
+                        }}
+                        onMouseLeave={() => {
+                            console.log("🔍 트랙 mouseLeave");
+                            if (!isDragging && isScrollable()) {
+                                setHideTimer(hideDelay);
+                            }
+                        }}
                         style={{
                             position: "absolute",
-                            top: showArrows
-                                ? `${finalThumbWidth + 8}px`
-                                : "4px",
-                            right: `${
-                                (finalTrackWidth - finalThumbWidth) / 2
-                            }px`, // 트랙 가운데 정렬
-                            width: `${finalThumbWidth}px`,
-                            height: showArrows
-                                ? `calc(100% - ${finalThumbWidth * 2 + 16}px)`
-                                : "calc(100% - 8px)",
-                            backgroundColor: trackColor,
-                            borderRadius: `${calculatedThumbRadius}px`,
+                            top: 0,
+                            right: 0, // 완전히 오른쪽에 붙임
+                            width: `${finalTrackWidth}px`, // hover 영역 너비
+                            height: "100%",
+                            opacity: scrollbarVisible ? 1 : 0,
+                            transition: "opacity 0.2s ease-in-out",
                             cursor: "pointer",
+                            zIndex: 1000,
+                            pointerEvents: "auto", // 항상 이벤트 활성화 (hover 감지용)
                         }}
-                    />
+                    >
+                        {/* 스크롤바 트랙 배경 */}
+                        <div
+                            className="overlay-scrollbar-track-background"
+                            onClick={handleTrackClick}
+                            style={{
+                                position: "absolute",
+                                top: showArrows
+                                    ? `${finalThumbWidth + 8}px`
+                                    : "4px",
+                                right: `${
+                                    (finalTrackWidth - finalThumbWidth) / 2
+                                }px`, // 트랙 가운데 정렬
+                                width: `${finalThumbWidth}px`,
+                                height: showArrows
+                                    ? `calc(100% - ${
+                                          finalThumbWidth * 2 + 16
+                                      }px)`
+                                    : "calc(100% - 8px)",
+                                backgroundColor: trackColor,
+                                borderRadius: `${calculatedThumbRadius}px`,
+                                cursor: "pointer",
+                            }}
+                        />
 
-                    {/* 스크롤바 썸 */}
-                    <div
-                        ref={thumbRef}
-                        className="overlay-scrollbar-thumb"
-                        onMouseDown={handleThumbMouseDown}
-                        style={{
-                            position: "absolute",
-                            top: `${
-                                (showArrows ? finalThumbWidth + 8 : 4) +
-                                thumbTop
-                            }px`,
-                            right: `${
-                                (finalTrackWidth - finalThumbWidth) / 2
-                            }px`, // 트랙 가운데 정렬
-                            width: `${finalThumbWidth}px`,
-                            height: `${Math.max(
-                                thumbHeight,
-                                thumbMinHeight
-                            )}px`,
-                            backgroundColor: isDragging
-                                ? thumbActiveColor
-                                : thumbColor,
-                            borderRadius: `${calculatedThumbRadius}px`,
-                            cursor: "pointer",
-                            transition: isDragging
-                                ? "none"
-                                : "background-color 0.2s ease-in-out",
-                        }}
-                    />
-                </div>
+                        {/* 스크롤바 썸 */}
+                        <div
+                            ref={thumbRef}
+                            className="overlay-scrollbar-thumb"
+                            onMouseDown={handleThumbMouseDown}
+                            style={{
+                                position: "absolute",
+                                top: `${
+                                    (showArrows ? finalThumbWidth + 8 : 4) +
+                                    thumbTop
+                                }px`,
+                                right: `${
+                                    (finalTrackWidth - finalThumbWidth) / 2
+                                }px`, // 트랙 가운데 정렬
+                                width: `${finalThumbWidth}px`,
+                                height: `${Math.max(
+                                    thumbHeight,
+                                    thumbMinHeight
+                                )}px`,
+                                backgroundColor: isDragging
+                                    ? thumbActiveColor
+                                    : thumbColor,
+                                borderRadius: `${calculatedThumbRadius}px`,
+                                cursor: "pointer",
+                                transition: isDragging
+                                    ? "none"
+                                    : "background-color 0.2s ease-in-out",
+                            }}
+                        />
+                    </div>
+                )}
 
                 {/* 위쪽 화살표 버튼 */}
-                {showArrows && (
+                {showScrollbar && showArrows && (
                     <div
                         className="overlay-scrollbar-up-arrow"
                         onClick={handleUpArrowClick}
@@ -681,7 +677,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 )}
 
                 {/* 아래쪽 화살표 버튼 */}
-                {showArrows && (
+                {showScrollbar && showArrows && (
                     <div
                         className="overlay-scrollbar-down-arrow"
                         onClick={handleDownArrowClick}
