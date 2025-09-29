@@ -566,15 +566,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         ref={scrollbarRef}
                         className="overlay-scrollbar-track"
                         onMouseEnter={() => {
-                            console.log("🔍 트랙 mouseEnter");
                             if (isScrollable()) {
-                                console.log("✅ 트랙 hover로 스크롤바 표시");
                                 clearHideTimer();
                                 setScrollbarVisible(true);
                             }
                         }}
                         onMouseLeave={() => {
-                            console.log("🔍 트랙 mouseLeave");
                             if (!isDragging && isScrollable()) {
                                 setHideTimer(hideDelay);
                             }
