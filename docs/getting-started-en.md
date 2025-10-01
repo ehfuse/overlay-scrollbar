@@ -1,0 +1,488 @@
+# Getting Started with OverlayScrollbar
+
+A guide for installing and using the highly customizable React overlay scrollbar component.
+
+## Table of Contents
+
+1. [Installation](#installation)
+2. [Basic Usage](#basic-usage)
+3. [Configuration Object (v1.3.0+)](#configuration-object-v130)
+4. [Drag Scroll](#drag-scroll)
+5. [Arrow Navigation](#arrow-navigation)
+6. [Color and Size Customization](#color-and-size-customization)
+7. [External Container Connection](#external-container-connection)
+8. [TypeScript Usage](#typescript-usage)
+9. [API Reference](#api-reference)
+10. [Troubleshooting](#troubleshooting)
+
+## Installation
+
+```bash
+npm install @ehfuse/overlay-scrollbar
+```
+
+or
+
+```bash
+yarn add @ehfuse/overlay-scrollbar
+```
+
+## Basic Usage
+
+### Simple Example
+
+```tsx
+import React from "react";
+import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
+
+function App() {
+    return (
+        <div style={{ height: "400px" }}>
+            <OverlayScrollbar>
+                <div style={{ height: "1000px", padding: "20px" }}>
+                    <h2>Scrollable Content</h2>
+                    <p>Long content goes here...</p>
+                </div>
+            </OverlayScrollbar>
+        </div>
+    );
+}
+```
+
+### Core Concepts
+
+-   **True Overlay**: Floats above content without affecting layout
+-   **Smart Auto-Hide**: Intelligent show/hide based on scroll state
+-   **Hover Display**: Appears immediately when hovering over track area
+-   **Smooth Animations**: Fade effects for all state changes
+
+## Configuration Object (v1.3.0+)
+
+Starting from v1.3.0, related settings are grouped into objects for a cleaner API.
+
+### Basic Structure
+
+```tsx
+<OverlayScrollbar
+    thumb={{
+        width: 8,
+        color: "rgba(100, 100, 100, 0.7)",
+        activeColor: "rgba(100, 100, 100, 0.9)",
+    }}
+    track={{
+        width: 16,
+        color: "rgba(0, 0, 0, 0.1)",
+    }}
+    arrows={{
+        visible: true,
+        step: 50,
+    }}
+    dragScroll={{
+        enabled: true,
+        excludeClasses: ["no-drag"],
+    }}
+>
+    {/* Content */}
+</OverlayScrollbar>
+```
+
+## Drag Scroll
+
+A feature that allows scrolling by dragging the content with the mouse.
+
+### Basic Usage
+
+```tsx
+function DragScrollExample() {
+    return (
+        <OverlayScrollbar
+            dragScroll={{
+                enabled: true, // default: true
+            }}
+        >
+            <div style={{ height: "1000px" }}>
+                <p>Drag this area to scroll!</p>
+                <input
+                    type="text"
+                    placeholder="Input fields are automatically excluded"
+                />
+                <button>Buttons are also automatically excluded</button>
+            </div>
+        </OverlayScrollbar>
+    );
+}
+```
+
+### Automatically Excluded Elements
+
+Elements that the system automatically excludes from drag scroll:
+
+1. **Basic Input Elements**: `input`, `textarea`, `select`, `button`
+2. **Editable Elements**: `contenteditable="true"`
+3. **SVG Elements**: Icons and graphic elements
+4. **UI Libraries**: Material-UI, Ant Design, Shadcn/ui, Radix UI, etc.
+
+### Custom Exclusion Settings
+
+To exclude specific elements from drag scroll:
+
+```tsx
+<OverlayScrollbar
+    dragScroll={{
+        enabled: true,
+        excludeClasses: [
+            "no-drag", // exclude by class
+            "chart-controls", // chart manipulation area
+            "image-gallery", // image gallery
+        ],
+        excludeSelectors: [
+            ".toolbar button", // toolbar buttons
+            "[data-interactive='true']", // data attribute
+            ".canvas-container canvas", // canvas elements
+        ],
+    }}
+>
+    <div>
+        <div className="no-drag">This area cannot be drag scrolled</div>
+        <div data-interactive="true">Interactive content</div>
+        <p>Normal text can be drag scrolled</p>
+    </div>
+</OverlayScrollbar>
+```
+
+## Arrow Navigation
+
+You can add arrow buttons at the top and bottom of the scrollbar.
+
+```tsx
+function ArrowExample() {
+    return (
+        <OverlayScrollbar
+            arrows={{
+                visible: true, // show arrows
+                step: 100, // scroll distance per click (px)
+                color: "rgba(80, 80, 80, 0.8)",
+                activeColor: "rgba(40, 40, 40, 1.0)",
+            }}
+        >
+            <div style={{ height: "1500px" }}>
+                Content that can be scrolled with arrows
+            </div>
+        </OverlayScrollbar>
+    );
+}
+```
+
+## Color and Size Customization
+
+### Complete Style Customization
+
+```tsx
+function StyledExample() {
+    return (
+        <OverlayScrollbar
+            thumb={{
+                width: 10, // thumb width
+                minHeight: 60, // thumb minimum height
+                radius: 8, // rounded corners
+                color: "rgba(70, 130, 180, 0.7)", // default color
+                activeColor: "rgba(70, 130, 180, 1.0)", // color when dragging
+            }}
+            track={{
+                width: 20, // track width
+                color: "rgba(200, 200, 200, 0.8)", // track background color
+                visible: true, // show track background
+            }}
+            arrows={{
+                visible: true,
+                color: "rgba(100, 100, 100, 0.8)",
+                activeColor: "rgba(50, 50, 50, 1.0)",
+            }}
+            hideDelay={2000} // hide after 2 seconds
+            hideDelayOnWheel={500} // hide after 0.5 seconds after wheel
+        >
+            <div style={{ height: "1000px" }}>Customized scrollbar</div>
+        </OverlayScrollbar>
+    );
+}
+```
+
+## External Container Connection
+
+You can connect the scrollbar to virtualized lists or custom scroll implementations.
+
+```tsx
+import React, { useEffect, useState } from "react";
+import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
+
+function VirtualizedExample() {
+    const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
+        null
+    );
+
+    useEffect(() => {
+        // Find the scroll container of the virtualized list
+        const container = document.querySelector(".virtuoso-scroller");
+        setScrollContainer(container as HTMLElement);
+    }, []);
+
+    return (
+        <div style={{ height: "400px", position: "relative" }}>
+            {/* Virtualized list */}
+            <VirtualizedList />
+
+            {/* Scrollbar connected to external container */}
+            <OverlayScrollbar
+                scrollContainer={scrollContainer}
+                thumb={{ width: 8 }}
+                track={{ width: 16 }}
+            />
+        </div>
+    );
+}
+```
+
+## TypeScript Usage
+
+Full type support for safe development.
+
+```tsx
+import React, { useRef } from "react";
+import {
+    OverlayScrollbar,
+    OverlayScrollbarRef,
+    ThumbConfig,
+    TrackConfig,
+    ArrowsConfig,
+    DragScrollConfig,
+} from "@ehfuse/overlay-scrollbar";
+
+const MyComponent: React.FC = () => {
+    const scrollbarRef = useRef<OverlayScrollbarRef>(null);
+
+    // Type-safe configuration objects
+    const thumbConfig: ThumbConfig = {
+        width: 8,
+        radius: 6,
+        color: "rgba(100, 100, 100, 0.7)",
+        activeColor: "rgba(100, 100, 100, 0.9)",
+    };
+
+    const trackConfig: TrackConfig = {
+        width: 16,
+        color: "rgba(0, 0, 0, 0.1)",
+        visible: true,
+    };
+
+    const dragScrollConfig: DragScrollConfig = {
+        enabled: true,
+        excludeClasses: ["no-drag", "interactive"],
+        excludeSelectors: [".toolbar button", "[data-no-drag]"],
+    };
+
+    const scrollToTop = () => {
+        scrollbarRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const getScrollInfo = () => {
+        if (scrollbarRef.current) {
+            console.log({
+                scrollTop: scrollbarRef.current.scrollTop,
+                scrollHeight: scrollbarRef.current.scrollHeight,
+                clientHeight: scrollbarRef.current.clientHeight,
+            });
+        }
+    };
+
+    return (
+        <div style={{ height: "400px" }}>
+            <div style={{ marginBottom: "10px" }}>
+                <button onClick={scrollToTop}>Scroll to Top</button>
+                <button onClick={getScrollInfo}>Get Scroll Info</button>
+            </div>
+
+            <OverlayScrollbar
+                ref={scrollbarRef}
+                thumb={thumbConfig}
+                track={trackConfig}
+                dragScroll={dragScrollConfig}
+                onScroll={(event) => {
+                    console.log("Scrolled!", scrollbarRef.current?.scrollTop);
+                }}
+            >
+                <div style={{ height: "1000px", padding: "20px" }}>
+                    <h2>TypeScript Example</h2>
+                    <p>Type-safe scrollbar usage</p>
+                </div>
+            </OverlayScrollbar>
+        </div>
+    );
+};
+```
+
+## API Reference
+
+### Props
+
+| Property           | Type                     | Default | Description                 |
+| ------------------ | ------------------------ | ------- | --------------------------- |
+| `children`         | `ReactNode`              | -       | Content to scroll           |
+| `className`        | `string`                 | -       | Additional CSS class        |
+| `style`            | `React.CSSProperties`    | -       | Additional inline style     |
+| `onScroll`         | `(event: Event) => void` | -       | Scroll event callback       |
+| `scrollContainer`  | `HTMLElement \| null`    | -       | External scroll container   |
+| `thumb`            | `ThumbConfig`            | `{}`    | Thumb configuration object  |
+| `track`            | `TrackConfig`            | `{}`    | Track configuration object  |
+| `arrows`           | `ArrowsConfig`           | `{}`    | Arrows configuration object |
+| `dragScroll`       | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
+| `showScrollbar`    | `boolean`                | `true`  | Show scrollbar              |
+| `hideDelay`        | `number`                 | `1500`  | Auto-hide delay (ms)        |
+| `hideDelayOnWheel` | `number`                 | `700`   | Hide delay after wheel (ms) |
+
+### Configuration Object Properties
+
+#### ThumbConfig
+
+| Property      | Type     | Default                      | Description               |
+| ------------- | -------- | ---------------------------- | ------------------------- |
+| `width`       | `number` | `8`                          | Thumb width (px)          |
+| `minHeight`   | `number` | `50`                         | Thumb minimum height (px) |
+| `radius`      | `number` | `width / 2`                  | Thumb border radius (px)  |
+| `color`       | `string` | `"rgba(128, 128, 128, 0.6)"` | Thumb default color       |
+| `activeColor` | `string` | `"rgba(128, 128, 128, 0.9)"` | Thumb color when dragging |
+
+#### TrackConfig
+
+| Property  | Type      | Default                      | Description                 |
+| --------- | --------- | ---------------------------- | --------------------------- |
+| `width`   | `number`  | `16`                         | Track hover area width (px) |
+| `color`   | `string`  | `"rgba(128, 128, 128, 0.1)"` | Track background color      |
+| `visible` | `boolean` | `true`                       | Show track background       |
+
+#### ArrowsConfig
+
+| Property      | Type      | Default                      | Description                    |
+| ------------- | --------- | ---------------------------- | ------------------------------ |
+| `visible`     | `boolean` | `false`                      | Show arrow buttons             |
+| `step`        | `number`  | `50`                         | Scroll distance per click (px) |
+| `color`       | `string`  | `"rgba(128, 128, 128, 0.8)"` | Arrow default color            |
+| `activeColor` | `string`  | `"rgba(64, 64, 64, 1.0)"`    | Arrow color on hover           |
+
+#### DragScrollConfig
+
+| Property           | Type       | Default | Description                               |
+| ------------------ | ---------- | ------- | ----------------------------------------- |
+| `enabled`          | `boolean`  | `true`  | Enable drag scroll                        |
+| `excludeClasses`   | `string[]` | `[]`    | Classes to exclude from drag scroll       |
+| `excludeSelectors` | `string[]` | `[]`    | CSS selectors to exclude from drag scroll |
+
+### Main Interfaces
+
+```tsx
+interface OverlayScrollbarProps {
+    children: ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+    onScroll?: (event: Event) => void;
+    scrollContainer?: HTMLElement | null;
+
+    // Configuration objects
+    thumb?: ThumbConfig;
+    track?: TrackConfig;
+    arrows?: ArrowsConfig;
+    dragScroll?: DragScrollConfig;
+
+    // Other settings
+    showScrollbar?: boolean; // default: true
+    hideDelay?: number; // default: 1500ms
+    hideDelayOnWheel?: number; // default: 700ms
+}
+
+interface ThumbConfig {
+    width?: number; // default: 8px
+    minHeight?: number; // default: 50px
+    radius?: number; // default: width / 2
+    color?: string; // default: "rgba(128, 128, 128, 0.6)"
+    activeColor?: string; // default: "rgba(128, 128, 128, 0.9)"
+}
+
+interface TrackConfig {
+    width?: number; // default: 16px
+    color?: string; // default: "rgba(128, 128, 128, 0.1)"
+    visible?: boolean; // default: true
+}
+
+interface ArrowsConfig {
+    visible?: boolean; // default: false
+    step?: number; // default: 50px
+    color?: string; // default: "rgba(128, 128, 128, 0.8)"
+    activeColor?: string; // default: "rgba(64, 64, 64, 1.0)"
+}
+
+interface DragScrollConfig {
+    enabled?: boolean; // default: true
+    excludeClasses?: string[]; // additional exclude classes
+    excludeSelectors?: string[]; // additional exclude selectors
+}
+```
+
+### Ref Methods
+
+```tsx
+interface OverlayScrollbarRef {
+    getScrollContainer: () => HTMLDivElement | null;
+    scrollTo: (options: ScrollToOptions) => void;
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+}
+```
+
+## Troubleshooting
+
+### Frequently Asked Questions
+
+**Q: The scrollbar is not visible**
+A: Make sure the container has an explicit height set and the content is larger than the container.
+
+**Q: Drag scroll is not working**
+A: Check if `dragScroll.enabled` is `true` and the target element is not in the exclusion list.
+
+**Q: How to use with virtualized lists?**
+A: Pass the actual scrollable element to the `scrollContainer` prop.
+
+```tsx
+// Virtuoso example
+const [scrollContainer, setScrollContainer] = useState(null);
+
+useEffect(() => {
+    const container = document.querySelector(".virtuoso-scroller");
+    setScrollContainer(container);
+}, []);
+
+<OverlayScrollbar scrollContainer={scrollContainer} />;
+```
+
+**Q: The scrollbar is not visible on mobile**
+A: On mobile, touch scroll is prioritized and the overlay scrollbar is automatically hidden.
+
+### Performance Optimization
+
+1. **Large Content**: Recommend using virtualized lists
+2. **Many Scrollbars**: Adjust `hideDelay` for better performance
+3. **Complex Exclusion Rules**: Use simple class names as much as possible
+
+## Browser Support
+
+-   **Chrome/Edge**: Full support
+-   **Firefox**: Full support
+-   **Safari**: Full support
+-   **Mobile**: Touch scroll support, overlay scrollbar hidden
+
+## License
+
+MIT © [KIM YOUNG JIN](mailto:ehfuse@gmail.com)
+
+## Issue Reporting
+
+If you find a bug or have a feature request, please report it at [GitHub Issues](https://github.com/ehfuse/overlay-scrollbar/issues).
