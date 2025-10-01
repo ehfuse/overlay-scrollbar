@@ -55,6 +55,7 @@ function App() {
 -   **Smart Auto-Hide**: Intelligent show/hide based on scroll state
 -   **Hover Display**: Appears immediately when hovering over track area
 -   **Smooth Animations**: Fade effects for all state changes
+-   **Auto-Detection**: Automatically finds and tracks scrollable containers (Virtuoso, custom implementations, etc.)
 
 ## Configuration Object (v1.3.0+)
 
@@ -174,8 +175,10 @@ function ArrowExample() {
             arrows={{
                 visible: true, // show arrows
                 step: 100, // scroll distance per click (px)
-                color: "rgba(80, 80, 80, 0.8)",
-                activeColor: "rgba(40, 40, 40, 1.0)",
+                color: "#808080",
+                opacity: 0.6,
+                hoverColor: "#404040",
+                hoverOpacity: 1.0,
             }}
         >
             <div style={{ height: "1500px" }}>
@@ -198,8 +201,10 @@ function StyledExample() {
                 width: 10, // thumb width
                 minHeight: 60, // thumb minimum height
                 radius: 8, // rounded corners
-                color: "rgba(70, 130, 180, 0.7)", // default color
-                activeColor: "rgba(70, 130, 180, 1.0)", // color when dragging
+                color: "#4682b4", // default color
+                opacity: 0.7,
+                hoverColor: "#4682b4", // color when hovering/dragging
+                hoverOpacity: 1.0,
             }}
             track={{
                 width: 20, // track width
@@ -208,11 +213,16 @@ function StyledExample() {
             }}
             arrows={{
                 visible: true,
-                color: "rgba(100, 100, 100, 0.8)",
-                activeColor: "rgba(50, 50, 50, 1.0)",
+                color: "#646464",
+                opacity: 0.8,
+                hoverColor: "#323232",
+                hoverOpacity: 1.0,
             }}
-            hideDelay={2000} // hide after 2 seconds
-            hideDelayOnWheel={500} // hide after 0.5 seconds after wheel
+            autoHide={{
+                enabled: true,
+                delay: 2000, // hide after 2 seconds
+                delayOnWheel: 500, // hide after 0.5 seconds after wheel
+            }}
         >
             <div style={{ height: "1000px" }}>Customized scrollbar</div>
         </OverlayScrollbar>
@@ -220,36 +230,54 @@ function StyledExample() {
 }
 ```
 
-## External Container Connection
+## Automatic Scroll Container Detection
 
-You can connect the scrollbar to virtualized lists or custom scroll implementations.
+OverlayScrollbar automatically detects and connects to scrollable containers, including virtualized lists (Virtuoso, react-window, etc.) and custom scroll implementations.
+
+### How It Works
+
+1. **Automatic Discovery**: Searches for common scroll containers (`.virtuoso-scroller`, `[data-virtuoso-scroller]`, elements with overflow styles)
+2. **Performance Caching**: Caches the found container to avoid repeated searches
+3. **Dynamic Updates**: Uses MutationObserver to detect DOM changes and re-discover containers when needed
+4. **Zero Configuration**: No need to manually pass scroll containers
+
+### Usage with Virtualized Lists
 
 ```tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Virtuoso } from "react-virtuoso";
 import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
 
 function VirtualizedExample() {
-    const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
-        null
-    );
-
-    useEffect(() => {
-        // Find the scroll container of the virtualized list
-        const container = document.querySelector(".virtuoso-scroller");
-        setScrollContainer(container as HTMLElement);
-    }, []);
-
     return (
         <div style={{ height: "400px", position: "relative" }}>
-            {/* Virtualized list */}
-            <VirtualizedList />
+            <OverlayScrollbar thumb={{ width: 8 }} track={{ width: 16 }}>
+                {/* Virtuoso's scroll container is automatically detected */}
+                <Virtuoso
+                    data={Array.from({ length: 1000 })}
+                    itemContent={(index) => <div>Item {index}</div>}
+                />
+            </OverlayScrollbar>
+        </div>
+    );
+}
 
-            {/* Scrollbar connected to external container */}
-            <OverlayScrollbar
-                scrollContainer={scrollContainer}
-                thumb={{ width: 8 }}
-                track={{ width: 16 }}
-            />
+// Works with any virtualized library
+function ReactWindowExample() {
+    return (
+        <div style={{ height: "400px" }}>
+            <OverlayScrollbar>
+                <FixedSizeList
+                    height={400}
+                    itemCount={1000}
+                    itemSize={35}
+                    width="100%"
+                >
+                    {({ index, style }) => (
+                        <div style={style}>Item {index}</div>
+                    )}
+                </FixedSizeList>
+            </OverlayScrollbar>
         </div>
     );
 }
@@ -339,19 +367,18 @@ const MyComponent: React.FC = () => {
 
 ### Props
 
-| Property          | Type                     | Default | Description                 |
-| ----------------- | ------------------------ | ------- | --------------------------- |
-| `children`        | `ReactNode`              | -       | Content to scroll           |
-| `className`       | `string`                 | -       | Additional CSS class        |
-| `style`           | `React.CSSProperties`    | -       | Additional inline style     |
-| `onScroll`        | `(event: Event) => void` | -       | Scroll event callback       |
-| `scrollContainer` | `HTMLElement \| null`    | -       | External scroll container   |
-| `thumb`           | `ThumbConfig`            | `{}`    | Thumb configuration object  |
-| `track`           | `TrackConfig`            | `{}`    | Track configuration object  |
-| `arrows`          | `ArrowsConfig`           | `{}`    | Arrows configuration object |
-| `dragScroll`      | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
-| `autoHide`        | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
-| `showScrollbar`   | `boolean`                | `true`  | Show scrollbar              |
+| Property        | Type                     | Default | Description                 |
+| --------------- | ------------------------ | ------- | --------------------------- |
+| `children`      | `ReactNode`              | -       | Content to scroll           |
+| `className`     | `string`                 | -       | Additional CSS class        |
+| `style`         | `React.CSSProperties`    | -       | Additional inline style     |
+| `onScroll`      | `(event: Event) => void` | -       | Scroll event callback       |
+| `thumb`         | `ThumbConfig`            | `{}`    | Thumb configuration object  |
+| `track`         | `TrackConfig`            | `{}`    | Track configuration object  |
+| `arrows`        | `ArrowsConfig`           | `{}`    | Arrows configuration object |
+| `dragScroll`    | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
+| `autoHide`      | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
+| `showScrollbar` | `boolean`                | `true`  | Show scrollbar              |
 
 ### Configuration Object Properties
 
@@ -413,7 +440,6 @@ interface OverlayScrollbarProps {
     className?: string;
     style?: React.CSSProperties;
     onScroll?: (event: Event) => void;
-    scrollContainer?: HTMLElement | null;
 
     // Configuration objects
     thumb?: ThumbConfig;
@@ -490,14 +516,18 @@ A: Make sure the container has an explicit height set and the content is larger 
 A: Check if `dragScroll.enabled` is `true` and the target element is not in the exclusion list.
 
 **Q: How to use with virtualized lists?**
-A: Pass the actual scrollable element to the `scrollContainer` prop.
+A: Just wrap the virtualized list component. OverlayScrollbar automatically detects and connects to the scroll container.
 
 ```tsx
-// Virtuoso example
-const [scrollContainer, setScrollContainer] = useState(null);
+// Virtuoso example - automatic detection
+<OverlayScrollbar>
+    <Virtuoso
+        data={items}
+        itemContent={(index, item) => <div>{item}</div>}
+    />
+</OverlayScrollbar>
 
-useEffect(() => {
-    const container = document.querySelector(".virtuoso-scroller");
+// No need for manual container detection like this:
     setScrollContainer(container);
 }, []);
 
@@ -510,7 +540,7 @@ A: On mobile, touch scroll is prioritized and the overlay scrollbar is automatic
 ### Performance Optimization
 
 1. **Large Content**: Recommend using virtualized lists
-2. **Many Scrollbars**: Adjust `hideDelay` for better performance
+2. **Many Scrollbars**: Adjust `autoHide.delay` for better performance
 3. **Complex Exclusion Rules**: Use simple class names as much as possible
 
 ## Browser Support

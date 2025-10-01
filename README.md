@@ -17,7 +17,7 @@ A highly customizable React component that provides a beautiful overlay scrollba
 -   ⚡ **Smooth Animations** - Fade transitions and hover effects
 -   🔍 **Smart Auto-hide** - Intelligent visibility management
 -   🧠 **Smart Input Detection** - Excludes interactive elements automatically
--   📦 **External Container Support** - Works with virtualized lists
+-   🤖 **Auto-Detection** - Automatically finds scrollable containers (Virtuoso, react-window, etc.)
 -   🔧 **TypeScript** - Complete type definitions
 -   🪶 **Zero Dependencies** - Only requires React
 -   ♿ **Accessible** - Preserves native scroll behavior
@@ -30,7 +30,7 @@ A highly customizable React component that provides a beautiful overlay scrollba
 -   ⚡ **부드러운 애니메이션** - 페이드 전환 및 호버 효과
 -   🔍 **스마트 자동 숨김** - 지능적인 표시 관리
 -   🧠 **스마트 입력 감지** - 인터랙티브 요소 자동 제외
--   📦 **외부 컨테이너 지원** - 가상화된 리스트와 연동
+-   🤖 **자동 감지** - 스크롤 가능한 컨테이너 자동 검색 (Virtuoso, react-window 등)
 -   🔧 **TypeScript** - 완전한 타입 정의
 -   🪶 **의존성 없음** - React만 필요
 -   ♿ **접근성** - 기본 스크롤 동작 보존
@@ -74,20 +74,30 @@ function App() {
 
 ## 🎯 Main API
 
-### Configuration Objects (v1.3.0+)
+### Configuration Objects (v1.4.0+)
 
 ```tsx
 interface OverlayScrollbarProps {
+    children: ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+    onScroll?: (event: Event) => void;
+
     // Grouped configuration objects
     thumb?: ThumbConfig; // Scrollbar thumb settings
     track?: TrackConfig; // Track area settings
     arrows?: ArrowsConfig; // Arrow buttons settings
     dragScroll?: DragScrollConfig; // Drag scroll settings
+    autoHide?: AutoHideConfig; // Auto-hide behavior settings
 
     // General settings
-    hideDelay?: number; // Auto-hide delay (default: 1500ms)
-    hideDelayOnWheel?: number; // Quick hide after wheel (default: 700ms)
-    scrollContainer?: HTMLElement; // External container support
+    showScrollbar?: boolean; // Show scrollbar (default: true)
+}
+
+interface AutoHideConfig {
+    enabled?: boolean; // Enable auto-hide (default: true)
+    delay?: number; // Auto-hide delay (default: 1500ms)
+    delayOnWheel?: number; // Quick hide after wheel (default: 700ms)
 }
 ```
 

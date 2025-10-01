@@ -55,6 +55,7 @@ function App() {
 -   **스마트 자동 숨김**: 스크롤 상태에 따른 지능적 표시/숨김
 -   **호버 표시**: 트랙 영역에 마우스 올리면 즉시 나타남
 -   **부드러운 애니메이션**: 모든 상태 변화에 페이드 효과
+-   **자동 감지**: 스크롤 가능한 컨테이너를 자동으로 찾아 연결 (Virtuoso, 커스텀 구현 등)
 
 ## 설정 객체 (v1.3.0+)
 
@@ -171,8 +172,10 @@ function ArrowExample() {
             arrows={{
                 visible: true, // 화살표 표시
                 step: 100, // 클릭당 스크롤 거리 (px)
-                color: "rgba(80, 80, 80, 0.8)",
-                activeColor: "rgba(40, 40, 40, 1.0)",
+                color: "#808080",
+                opacity: 0.6,
+                hoverColor: "#404040",
+                hoverOpacity: 1.0,
             }}
         >
             <div style={{ height: "1500px" }}>
@@ -195,8 +198,10 @@ function StyledExample() {
                 width: 10, // 썸 너비
                 minHeight: 60, // 썸 최소 높이
                 radius: 8, // 둥근 모서리
-                color: "rgba(70, 130, 180, 0.7)", // 기본 색상
-                activeColor: "rgba(70, 130, 180, 1.0)", // 드래그시 색상
+                color: "#4682b4", // 기본 색상
+                opacity: 0.7,
+                hoverColor: "#4682b4", // 호버/드래그시 색상
+                hoverOpacity: 1.0,
             }}
             track={{
                 width: 20, // 트랙 너비
@@ -205,11 +210,16 @@ function StyledExample() {
             }}
             arrows={{
                 visible: true,
-                color: "rgba(100, 100, 100, 0.8)",
-                activeColor: "rgba(50, 50, 50, 1.0)",
+                color: "#646464",
+                opacity: 0.8,
+                hoverColor: "#323232",
+                hoverOpacity: 1.0,
             }}
-            hideDelay={2000} // 2초 후 숨김
-            hideDelayOnWheel={500} // 휠 후 0.5초 후 숨김
+            autoHide={{
+                enabled: true,
+                delay: 2000, // 2초 후 숨김
+                delayOnWheel: 500, // 휠 후 0.5초 후 숨김
+            }}
         >
             <div style={{ height: "1000px" }}>커스터마이징된 스크롤바</div>
         </OverlayScrollbar>
@@ -217,36 +227,54 @@ function StyledExample() {
 }
 ```
 
-## 외부 컨테이너 연결
+## 자동 스크롤 컨테이너 감지
 
-가상화된 리스트나 커스텀 스크롤 구현에 스크롤바를 연결할 수 있습니다.
+OverlayScrollbar는 가상화된 리스트(Virtuoso, react-window 등)와 커스텀 스크롤 구현을 자동으로 감지하고 연결합니다.
+
+### 작동 방식
+
+1. **자동 검색**: 일반적인 스크롤 컨테이너(`.virtuoso-scroller`, `[data-virtuoso-scroller]`, overflow 스타일 요소)를 검색
+2. **성능 캐싱**: 찾은 컨테이너를 캐싱하여 반복 검색 방지
+3. **동적 업데이트**: MutationObserver를 사용하여 DOM 변경을 감지하고 필요시 컨테이너 재검색
+4. **제로 설정**: 스크롤 컨테이너를 수동으로 전달할 필요 없음
+
+### 가상화 리스트와 함께 사용
 
 ```tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Virtuoso } from "react-virtuoso";
 import { OverlayScrollbar } from "@ehfuse/overlay-scrollbar";
 
 function VirtualizedExample() {
-    const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
-        null
-    );
-
-    useEffect(() => {
-        // 가상화된 리스트의 스크롤 컨테이너 찾기
-        const container = document.querySelector(".virtuoso-scroller");
-        setScrollContainer(container as HTMLElement);
-    }, []);
-
     return (
         <div style={{ height: "400px", position: "relative" }}>
-            {/* 가상화된 리스트 */}
-            <VirtualizedList />
+            <OverlayScrollbar thumb={{ width: 8 }} track={{ width: 16 }}>
+                {/* Virtuoso의 스크롤 컨테이너가 자동으로 감지됩니다 */}
+                <Virtuoso
+                    data={Array.from({ length: 1000 })}
+                    itemContent={(index) => <div>항목 {index}</div>}
+                />
+            </OverlayScrollbar>
+        </div>
+    );
+}
 
-            {/* 외부 컨테이너에 연결된 스크롤바 */}
-            <OverlayScrollbar
-                scrollContainer={scrollContainer}
-                thumb={{ width: 8 }}
-                track={{ width: 16 }}
-            />
+// 모든 가상화 라이브러리와 호환됩니다
+function ReactWindowExample() {
+    return (
+        <div style={{ height: "400px" }}>
+            <OverlayScrollbar>
+                <FixedSizeList
+                    height={400}
+                    itemCount={1000}
+                    itemSize={35}
+                    width="100%"
+                >
+                    {({ index, style }) => (
+                        <div style={style}>항목 {index}</div>
+                    )}
+                </FixedSizeList>
+            </OverlayScrollbar>
         </div>
     );
 }
@@ -336,19 +364,18 @@ const MyComponent: React.FC = () => {
 
 ### Props
 
-| 속성              | 타입                     | 기본값 | 설명                    |
-| ----------------- | ------------------------ | ------ | ----------------------- |
-| `children`        | `ReactNode`              | -      | 스크롤할 콘텐츠         |
-| `className`       | `string`                 | -      | 추가 CSS 클래스         |
-| `style`           | `React.CSSProperties`    | -      | 추가 인라인 스타일      |
-| `onScroll`        | `(event: Event) => void` | -      | 스크롤 이벤트 콜백      |
-| `scrollContainer` | `HTMLElement \| null`    | -      | 외부 스크롤 컨테이너    |
-| `thumb`           | `ThumbConfig`            | `{}`   | 썸 관련 설정 객체       |
-| `track`           | `TrackConfig`            | `{}`   | 트랙 관련 설정 객체     |
-| `arrows`          | `ArrowsConfig`           | `{}`   | 화살표 관련 설정 객체   |
-| `dragScroll`      | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체 |
-| `autoHide`        | `AutoHideConfig`         | `{}`   | 자동 숨김 설정 객체     |
-| `showScrollbar`   | `boolean`                | `true` | 스크롤바 표시 여부      |
+| 속성            | 타입                     | 기본값 | 설명                    |
+| --------------- | ------------------------ | ------ | ----------------------- |
+| `children`      | `ReactNode`              | -      | 스크롤할 콘텐츠         |
+| `className`     | `string`                 | -      | 추가 CSS 클래스         |
+| `style`         | `React.CSSProperties`    | -      | 추가 인라인 스타일      |
+| `onScroll`      | `(event: Event) => void` | -      | 스크롤 이벤트 콜백      |
+| `thumb`         | `ThumbConfig`            | `{}`   | 썸 관련 설정 객체       |
+| `track`         | `TrackConfig`            | `{}`   | 트랙 관련 설정 객체     |
+| `arrows`        | `ArrowsConfig`           | `{}`   | 화살표 관련 설정 객체   |
+| `dragScroll`    | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체 |
+| `autoHide`      | `AutoHideConfig`         | `{}`   | 자동 숨김 설정 객체     |
+| `showScrollbar` | `boolean`                | `true` | 스크롤바 표시 여부      |
 
 ### 설정 객체 속성
 
@@ -410,7 +437,6 @@ interface OverlayScrollbarProps {
     className?: string;
     style?: React.CSSProperties;
     onScroll?: (event: Event) => void;
-    scrollContainer?: HTMLElement | null;
 
     // 설정 객체들
     thumb?: ThumbConfig;
@@ -487,16 +513,18 @@ A: 컨테이너에 명시적인 높이가 설정되어 있고, 콘텐츠가 컨�
 A: `dragScroll.enabled`가 `true`인지 확인하고, 대상 요소가 제외 목록에 없는지 확인하세요.
 
 **Q: 가상화된 리스트와 함께 사용하려면?**
-A: `scrollContainer` prop에 실제 스크롤 가능한 요소를 전달하세요.
+A: 가상화 리스트 컴포넌트를 감싸기만 하면 됩니다. OverlayScrollbar가 자동으로 스크롤 컨테이너를 감지하고 연결합니다.
 
 ```tsx
-// Virtuoso 예제
-const [scrollContainer, setScrollContainer] = useState(null);
+// Virtuoso 예제 - 자동 감지
+<OverlayScrollbar>
+    <Virtuoso
+        data={items}
+        itemContent={(index, item) => <div>{item}</div>}
+    />
+</OverlayScrollbar>
 
-useEffect(() => {
-    const container = document.querySelector(".virtuoso-scroller");
-    setScrollContainer(container);
-}, []);
+// 이렇게 수동으로 컨테이너를 찾을 필요가 없습니다:
 
 <OverlayScrollbar scrollContainer={scrollContainer} />;
 ```
@@ -507,7 +535,7 @@ A: 모바일에서는 터치 스크롤을 우선시하여 오버레이 스크롤
 ### 성능 최적화
 
 1. **큰 콘텐츠**: 가상화된 리스트 사용 권장
-2. **많은 스크롤바**: `hideDelay` 조정으로 성능 향상
+2. **많은 스크롤바**: `autoHide.delay` 조정으로 성능 향상
 3. **복잡한 제외 규칙**: 가능한 한 간단한 클래스명 사용
 
 ## 브라우저 지원

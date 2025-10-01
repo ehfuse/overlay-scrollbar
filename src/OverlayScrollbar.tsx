@@ -84,7 +84,6 @@ export interface OverlayScrollbarProps {
     style?: React.CSSProperties;
     children: ReactNode;
     onScroll?: (event: Event) => void;
-    scrollContainer?: HTMLElement | null; // 외부에서 전달하는 실제 스크롤 컨테이너
 
     // 그룹화된 설정 객체들
     thumb?: ThumbConfig; // 썸 관련 설정
@@ -106,6 +105,13 @@ export interface OverlayScrollbarRef {
     clientHeight: number;
 }
 
+// 기본 설정 객체들을 컴포넌트 외부에 상수로 선언 (재렌더링 시 동일한 참조 유지)
+const DEFAULT_THUMB_CONFIG: ThumbConfig = {};
+const DEFAULT_TRACK_CONFIG: TrackConfig = {};
+const DEFAULT_ARROWS_CONFIG: ArrowsConfig = {};
+const DEFAULT_DRAG_SCROLL_CONFIG: DragScrollConfig = {};
+const DEFAULT_AUTO_HIDE_CONFIG: AutoHideConfig = {};
+
 const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
     (
         {
@@ -113,24 +119,53 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             style = {},
             children,
             onScroll,
-            scrollContainer: externalScrollContainer,
 
             // 그룹화된 설정 객체들
-            thumb = {},
-            track = {},
-            arrows = {},
-            dragScroll = {},
-            autoHide = {},
+            thumb = DEFAULT_THUMB_CONFIG,
+            track = DEFAULT_TRACK_CONFIG,
+            arrows = DEFAULT_ARROWS_CONFIG,
+            dragScroll = DEFAULT_DRAG_SCROLL_CONFIG,
+            autoHide = DEFAULT_AUTO_HIDE_CONFIG,
 
             // 기타 설정들
             showScrollbar = true,
         },
         ref
     ) => {
+        // props 변경 추적용 ref
+        const prevPropsRef = useRef<{
+            children?: ReactNode;
+            onScroll?: (event: Event) => void;
+            showScrollbar?: boolean;
+            thumb?: ThumbConfig;
+            track?: TrackConfig;
+            arrows?: ArrowsConfig;
+            dragScroll?: DragScrollConfig;
+            autoHide?: AutoHideConfig;
+        }>({});
+
+        // 렌더링 시 어떤 prop이 변경되었는지 체크
+        useEffect(() => {
+            // 현재 props 저장
+            prevPropsRef.current = {
+                children,
+                onScroll,
+                showScrollbar,
+                thumb,
+                track,
+                arrows,
+                dragScroll,
+                autoHide,
+            };
+        });
+
         const containerRef = useRef<HTMLDivElement>(null);
         const contentRef = useRef<HTMLDivElement>(null);
         const scrollbarRef = useRef<HTMLDivElement>(null);
         const thumbRef = useRef<HTMLDivElement>(null);
+
+        // 스크롤 컨테이너 캐싱용 ref (성능 최적화)
+        const cachedScrollContainerRef = useRef<HTMLElement | null>(null);
 
         // 기본 상태들
         const [scrollbarVisible, setScrollbarVisible] = useState(false);
@@ -251,41 +286,20 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             []
         );
 
-        // 실제 스크롤 가능한 요소 찾기
+        // 실제 스크롤 가능한 요소 찾기 (캐싱 최적화)
         const findScrollableElement = useCallback((): HTMLElement | null => {
-            // externalScrollContainer가 있으면 우선 사용
-            if (externalScrollContainer) {
-                console.log("OverlayScrollbar: checking external container", {
-                    scrollHeight: externalScrollContainer.scrollHeight,
-                    clientHeight: externalScrollContainer.clientHeight,
-                });
-
-                // virtuoso의 내부 스크롤러를 찾기
-                const virtuosoScroller = externalScrollContainer.querySelector(
-                    '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller'
-                );
-                if (virtuosoScroller) {
-                    const element = virtuosoScroller as HTMLElement;
-                    if (element.scrollHeight > element.clientHeight + 2) {
-                        console.log(
-                            "OverlayScrollbar: found virtuoso scroller",
-                            {
-                                scrollHeight: element.scrollHeight,
-                                clientHeight: element.clientHeight,
-                                element,
-                            }
-                        );
-                        return element;
-                    }
-                }
-
-                // externalScrollContainer 자체가 스크롤 가능한지 확인
+            // 캐시된 요소가 여전히 유효한지 확인
+            if (cachedScrollContainerRef.current) {
+                const cached = cachedScrollContainerRef.current;
+                // DOM에 연결되어 있고 여전히 스크롤 가능한지 확인
                 if (
-                    externalScrollContainer.scrollHeight >
-                    externalScrollContainer.clientHeight + 2
+                    document.contains(cached) &&
+                    cached.scrollHeight > cached.clientHeight + 2
                 ) {
-                    return externalScrollContainer;
+                    return cached;
                 }
+                // 캐시 무효화
+                cachedScrollContainerRef.current = null;
             }
 
             if (!containerRef.current) {
@@ -298,6 +312,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 contentRef.current.scrollHeight >
                     containerRef.current.clientHeight + 2
             ) {
+                cachedScrollContainerRef.current = containerRef.current;
                 return containerRef.current;
             }
 
@@ -309,20 +324,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             for (const child of childScrollableElements) {
                 const element = child as HTMLElement;
                 if (element.scrollHeight > element.clientHeight + 2) {
-                    console.log(
-                        "OverlayScrollbar: found scrollable child element",
-                        {
-                            scrollHeight: element.scrollHeight,
-                            clientHeight: element.clientHeight,
-                            element,
-                        }
-                    );
+                    cachedScrollContainerRef.current = element;
                     return element;
                 }
             }
 
             return null;
-        }, [externalScrollContainer]);
+        }, []);
 
         // 스크롤 가능 여부 체크
         const isScrollable = useCallback(() => {
@@ -375,13 +383,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const contentHeight = scrollableElement.scrollHeight;
             const scrollTop = scrollableElement.scrollTop;
 
-            console.log("OverlayScrollbar: updating scrollbar", {
-                containerHeight,
-                contentHeight,
-                scrollTop,
-                element: scrollableElement,
-            });
-
             // 화살표와 간격 공간 계산 (화살표 + 위아래 마진, 화살표 없어도 위아래 마진)
             const arrowSpace = showArrows
                 ? finalThumbWidth * 2 + finalTrackConfig.margin * 4
@@ -423,7 +424,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 const actualScrollContainer = findScrollableElement();
                 if (!actualScrollContainer) {
-                    console.log("Thumb drag - no scrollable element found");
                     return;
                 }
 
@@ -449,7 +449,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 const actualScrollContainer = findScrollableElement();
                 if (!actualScrollContainer) {
-                    console.log("Mouse move - no scrollable element found");
                     return;
                 }
 
@@ -493,10 +492,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 트랙 클릭으로 스크롤 점프
         const handleTrackClick = useCallback(
             (event: React.MouseEvent) => {
-                console.log("handleTrackClick called", event);
-
                 if (!scrollbarRef.current) {
-                    console.log("Track click - scrollbarRef not available");
                     return;
                 }
 
@@ -506,14 +502,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 const actualScrollContainer = findScrollableElement();
                 if (!actualScrollContainer) {
-                    console.log("Track click - no scrollable element found");
                     return;
                 }
-
-                console.log(
-                    "Track click - using scrollable element",
-                    actualScrollContainer
-                );
 
                 const containerHeight = actualScrollContainer.clientHeight;
                 const contentHeight = actualScrollContainer.scrollHeight;
@@ -521,15 +511,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 const scrollRatio = clickY / containerHeight;
                 const newScrollTop =
                     scrollRatio * (contentHeight - containerHeight);
-
-                console.log("Track click scroll calculation", {
-                    clickY,
-                    containerHeight,
-                    contentHeight,
-                    scrollRatio,
-                    newScrollTop,
-                    actualScrollContainer,
-                });
 
                 actualScrollContainer.scrollTop = Math.max(
                     0,
@@ -745,10 +726,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const scrollableElement = findScrollableElement();
             if (scrollableElement) {
                 elementsToWatch.push(scrollableElement);
-                console.log(
-                    "OverlayScrollbar: watching scrollable element for events",
-                    scrollableElement
-                );
             }
 
             // fallback: 내부 컨테이너와 children 요소도 감지
@@ -796,6 +773,97 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             isWheelScrolling,
         ]);
 
+        // 키보드 네비게이션 핸들러 (방향키, PageUp/PageDown/Home/End)
+        useEffect(() => {
+            const handleKeyDown = (event: KeyboardEvent) => {
+                const scrollableElement = findScrollableElement();
+                if (!scrollableElement) return;
+
+                const { key } = event;
+                const { scrollTop, scrollHeight, clientHeight } =
+                    scrollableElement;
+                const maxScrollTop = scrollHeight - clientHeight;
+
+                // 한 줄 스크롤 단위 (rowHeight 또는 기본값)
+                const lineScrollStep = 50;
+
+                let newScrollTop: number | null = null;
+
+                switch (key) {
+                    case "ArrowUp":
+                        event.preventDefault();
+                        newScrollTop = Math.max(0, scrollTop - lineScrollStep);
+                        break;
+                    case "ArrowDown":
+                        event.preventDefault();
+                        newScrollTop = Math.min(
+                            maxScrollTop,
+                            scrollTop + lineScrollStep
+                        );
+                        break;
+                    case "PageUp":
+                        event.preventDefault();
+                        newScrollTop = Math.max(0, scrollTop - clientHeight);
+                        break;
+                    case "PageDown":
+                        event.preventDefault();
+                        newScrollTop = Math.min(
+                            maxScrollTop,
+                            scrollTop + clientHeight
+                        );
+                        break;
+                    case "Home":
+                        event.preventDefault();
+                        newScrollTop = 0;
+                        break;
+                    case "End":
+                        event.preventDefault();
+                        newScrollTop = maxScrollTop;
+                        break;
+                    default:
+                        return;
+                }
+
+                if (newScrollTop !== null) {
+                    // 썸 위치를 먼저 업데이트
+                    const scrollRatio = newScrollTop / maxScrollTop;
+                    const arrowSpace = showArrows
+                        ? finalThumbWidth * 2 + finalTrackConfig.margin * 4
+                        : finalTrackConfig.margin * 2;
+                    const availableHeight = clientHeight - arrowSpace;
+                    const scrollableThumbHeight = availableHeight - thumbHeight;
+                    const newThumbTop = scrollableThumbHeight * scrollRatio;
+
+                    setThumbTop(newThumbTop);
+
+                    // 스크롤 위치를 즉시 변경 (애니메이션 없음)
+                    scrollableElement.scrollTop = newScrollTop;
+
+                    // 스크롤바 표시
+                    clearHideTimer();
+                    setScrollbarVisible(true);
+                    setHideTimer(finalAutoHideConfig.delay);
+                }
+            };
+
+            const container = containerRef.current;
+            if (container) {
+                container.addEventListener("keydown", handleKeyDown);
+                return () => {
+                    container.removeEventListener("keydown", handleKeyDown);
+                };
+            }
+        }, [
+            findScrollableElement,
+            showArrows,
+            finalThumbWidth,
+            finalTrackConfig.margin,
+            thumbHeight,
+            clearHideTimer,
+            setHideTimer,
+            finalAutoHideConfig.delay,
+        ]);
+
         // 드래그 스크롤 전역 마우스 이벤트 리스너
         useEffect(() => {
             if (isDragScrolling) {
@@ -837,32 +905,19 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             return () => clearTimeout(timer);
         }, [updateScrollbar]);
 
-        // externalScrollContainer가 변경될 때 스크롤바 업데이트
-        useEffect(() => {
-            if (externalScrollContainer) {
-                // externalScrollContainer가 설정된 후 스크롤바 업데이트
-                const timer = setTimeout(() => {
-                    updateScrollbar();
-                }, 50);
-                return () => clearTimeout(timer);
-            }
-        }, [externalScrollContainer, updateScrollbar]);
-
         // 컴포넌트 초기화 완료 표시 (hover 이벤트 활성화용)
         useEffect(() => {
             const timer = setTimeout(() => {
                 setIsInitialized(true);
-                console.log("OverlayScrollbar initialized", {
-                    containerRef: !!containerRef.current,
-                    contentRef: !!contentRef.current,
-                    isScrollable: isScrollable(),
-                    autoHideEnabled: finalAutoHideConfig.enabled,
-                });
                 // 초기화 후 스크롤바 업데이트 (썸 높이 정확하게 계산)
                 updateScrollbar();
                 // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
                 if (!finalAutoHideConfig.enabled && isScrollable()) {
                     setScrollbarVisible(true);
+                }
+                // 스크롤 컨테이너에 자동 포커스 (키보드 네비게이션 활성화)
+                if (containerRef.current) {
+                    containerRef.current.focus();
                 }
             }, 100);
 
@@ -877,17 +932,20 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             const elementsToObserve: HTMLElement[] = [];
 
-            // externalScrollContainer가 있으면 우선 관찰
-            if (externalScrollContainer) {
-                elementsToObserve.push(externalScrollContainer);
-            }
-
-            // 내부 컨테이너들도 관찰
+            // 내부 컨테이너들 관찰
             if (containerRef.current) {
                 elementsToObserve.push(containerRef.current);
             }
             if (contentRef.current) {
                 elementsToObserve.push(contentRef.current);
+            }
+
+            // 캐시된 스크롤 컨테이너도 관찰
+            if (
+                cachedScrollContainerRef.current &&
+                document.contains(cachedScrollContainerRef.current)
+            ) {
+                elementsToObserve.push(cachedScrollContainerRef.current);
             }
 
             // 모든 요소들 관찰 시작
@@ -896,7 +954,29 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             });
 
             return () => resizeObserver.disconnect();
-        }, [updateScrollbar, externalScrollContainer]);
+        }, [updateScrollbar]);
+
+        // MutationObserver로 DOM 변경 감지
+        useEffect(() => {
+            if (!containerRef.current) {
+                return;
+            }
+
+            const observer = new MutationObserver(() => {
+                // 캐시 초기화하여 새로운 스크롤 컨테이너 감지
+                cachedScrollContainerRef.current = null;
+                updateScrollbar();
+            });
+
+            observer.observe(containerRef.current, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ["style"],
+            });
+
+            return () => observer.disconnect();
+        }, [updateScrollbar]);
 
         // trackWidth가 thumbWidth보다 작으면 thumbWidth와 같게 설정
         const adjustedTrackWidth = Math.max(finalTrackWidth, finalThumbWidth);
@@ -997,15 +1077,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         ref={scrollbarRef}
                         className="overlay-scrollbar-track"
                         onMouseEnter={() => {
-                            console.log("Track hover enter", {
-                                isScrollable: isScrollable(),
-                                scrollbarVisible,
-                            });
                             clearHideTimer();
                             setScrollbarVisible(true);
                         }}
                         onMouseLeave={() => {
-                            console.log("Track hover leave", { isDragging });
                             if (!isDragging) {
                                 setHideTimer(finalAutoHideConfig.delay);
                             }
@@ -1028,7 +1103,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             <div
                                 className="overlay-scrollbar-track-background"
                                 onClick={(e) => {
-                                    console.log("Track background clicked", e);
                                     e.preventDefault();
                                     e.stopPropagation();
                                     handleTrackClick(e);
