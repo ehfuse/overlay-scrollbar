@@ -36,11 +36,13 @@ import { isTextInputElement } from "./utils/dragScrollUtils";
 
 // thumb 관련 설정
 export interface ThumbConfig {
-    width?: number; // 썸의 너비 (기본값: 8px)
-    minHeight?: number; // 썸의 최소 높이 (기본값: 50px)
-    radius?: number; // 썸의 border-radius (기본값: width / 2)
-    color?: string; // 썸 색상 (기본값: "rgba(128, 128, 128, 0.6)")
-    activeColor?: string; // 드래그 중 썸 색상 (기본값: "rgba(128, 128, 128, 0.9)")
+    width?: number; // 썸의 너비 (기본가: 8px)
+    minHeight?: number; // 썸의 최소 높이 (기본가: 50px)
+    radius?: number; // 썸의 border-radius (기본가: width / 2)
+    color?: string; // 썸 색상 (기본가: "#606060")
+    opacity?: number; // 기본 투명도 (기본가: 0.6)
+    hoverColor?: string; // 호버 시 색상 (기본값: color 동일)
+    hoverOpacity?: number; // 호버 시 투명도 (기본가: 1.0)
 }
 
 // track 관련 설정
@@ -48,14 +50,19 @@ export interface TrackConfig {
     width?: number; // 호버 영역인 트랙의 너비 (기본값: 16px)
     color?: string; // 트랙 배경 색상 (기본값: "rgba(128, 128, 128, 0.1)")
     visible?: boolean; // 트랙 배경 표시 여부 (기본값: true)
+    alignment?: "center" | "right"; // 트랙 내부 정렬 (기본가: "center")
+    radius?: number; // 트랙 배경의 border-radius (기본값: thumb.radius 또는 4px)
+    margin?: number; // 트랙 상하 마진 (기본값: 4px)
 }
 
 // arrows 관련 설정
 export interface ArrowsConfig {
-    visible?: boolean; // 화살표 표시 여부 (기본값: false)
-    step?: number; // 화살표 클릭시 스크롤 이동 거리 (기본값: 50px)
-    color?: string; // 화살표 색상 (기본값: "rgba(128, 128, 128, 0.8)")
-    activeColor?: string; // 화살표 hover 시 색상 (기본값: "rgba(64, 64, 64, 1.0)")
+    visible?: boolean; // 화살표 표시 여부 (기본가: false)
+    step?: number; // 화살표 클릭시 스크롤 이동 거리 (기본가: 50px)
+    color?: string; // 화살표 색상 (기본가: "#808080")
+    opacity?: number; // 기본 투명도 (기본가: 0.6)
+    hoverColor?: string; // 호버 시 색상 (기본가: color 동일)
+    hoverOpacity?: number; // 호버 시 투명도 (기본가: 1.0)
 }
 
 // 드래그 스크롤 관련 설정
@@ -63,6 +70,13 @@ export interface DragScrollConfig {
     enabled?: boolean; // 드래그 스크롤 활성화 여부 (기본값: true)
     excludeClasses?: string[]; // 드래그 스크롤을 제외할 추가 클래스들 (자신 또는 부모 요소 확인, 최대 5단계)
     excludeSelectors?: string[]; // 드래그 스크롤을 제외할 추가 CSS 셀렉터들 (element.matches() 사용)
+}
+
+// 자동 숨김 관련 설정
+export interface AutoHideConfig {
+    enabled?: boolean; // 자동 숨김 활성화 여부 (기본값: true)
+    delay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
+    delayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본가: 700ms)
 }
 
 export interface OverlayScrollbarProps {
@@ -77,11 +91,10 @@ export interface OverlayScrollbarProps {
     track?: TrackConfig; // 트랙 관련 설정
     arrows?: ArrowsConfig; // 화살표들 관련 설정
     dragScroll?: DragScrollConfig; // 드래그 스크롤 관련 설정
+    autoHide?: AutoHideConfig; // 자동 숨김 관련 설정
 
     // 기타 설정들
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
-    hideDelay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
-    hideDelayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본값: 700ms)
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -107,11 +120,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             track = {},
             arrows = {},
             dragScroll = {},
+            autoHide = {},
 
             // 기타 설정들
             showScrollbar = true,
-            hideDelay = 1500,
-            hideDelayOnWheel = 700,
         },
         ref
     ) => {
@@ -123,6 +135,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 기본 상태들
         const [scrollbarVisible, setScrollbarVisible] = useState(false);
         const [isDragging, setIsDragging] = useState(false);
+        const [isThumbHovered, setIsThumbHovered] = useState(false);
         const [dragStart, setDragStart] = useState({ y: 0, scrollTop: 0 });
         const [thumbHeight, setThumbHeight] = useState(0);
         const [thumbTop, setThumbTop] = useState(0);
@@ -153,35 +166,42 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
         // 그룹화된 설정 객체들에 기본값 설정
-        const finalThumbConfig = useMemo(
-            () => ({
+        const finalThumbConfig = useMemo(() => {
+            const baseColor = thumb.color ?? "#606060";
+            return {
                 width: thumb.width ?? 8,
                 minHeight: thumb.minHeight ?? 50,
                 radius: thumb.radius ?? (thumb.width ?? 8) / 2,
-                color: thumb.color ?? "rgba(128, 128, 128, 0.6)",
-                activeColor: thumb.activeColor ?? "rgba(128, 128, 128, 0.9)",
-            }),
-            [thumb]
-        );
+                color: baseColor,
+                opacity: thumb.opacity ?? 0.6,
+                hoverColor: thumb.hoverColor ?? baseColor,
+                hoverOpacity: thumb.hoverOpacity ?? 1.0,
+            };
+        }, [thumb]);
 
         const finalTrackConfig = useMemo(
             () => ({
                 width: track.width ?? 16,
                 color: track.color ?? "rgba(128, 128, 128, 0.1)",
                 visible: track.visible ?? true,
+                alignment: track.alignment ?? "center",
+                radius: track.radius ?? finalThumbConfig.radius ?? 4,
+                margin: track.margin ?? 4,
             }),
-            [track]
+            [track, finalThumbConfig.radius]
         );
 
-        const finalArrowsConfig = useMemo(
-            () => ({
+        const finalArrowsConfig = useMemo(() => {
+            const baseColor = arrows.color ?? "#808080";
+            return {
                 visible: arrows.visible ?? false,
                 step: arrows.step ?? 50,
-                color: arrows.color ?? "rgba(128, 128, 128, 0.8)",
-                activeColor: arrows.activeColor ?? "rgba(64, 64, 64, 1.0)",
-            }),
-            [arrows]
-        );
+                color: baseColor,
+                opacity: arrows.opacity ?? 0.6,
+                hoverColor: arrows.hoverColor ?? baseColor,
+                hoverOpacity: arrows.hoverOpacity ?? 1.0,
+            };
+        }, [arrows]);
 
         const finalDragScrollConfig = useMemo(
             () => ({
@@ -190,6 +210,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 excludeSelectors: dragScroll.excludeSelectors ?? [],
             }),
             [dragScroll]
+        );
+
+        const finalAutoHideConfig = useMemo(
+            () => ({
+                enabled: autoHide.enabled ?? true,
+                delay: autoHide.delay ?? 1500,
+                delayOnWheel: autoHide.delayOnWheel ?? 700,
+            }),
+            [autoHide]
         );
 
         // 호환성을 위한 변수들 (자주 사용되는 변수들만 유지)
@@ -311,13 +340,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 스크롤바 숨기기 타이머
         const setHideTimer = useCallback(
             (delay: number) => {
+                // 자동 숨김이 비활성화되어 있으면 타이머를 설정하지 않음
+                if (!finalAutoHideConfig.enabled) {
+                    return;
+                }
                 clearHideTimer();
                 hideTimeoutRef.current = setTimeout(() => {
                     setScrollbarVisible(false);
                     hideTimeoutRef.current = null;
                 }, delay);
             },
-            [clearHideTimer, isDragging]
+            [clearHideTimer, finalAutoHideConfig.enabled]
         );
 
         // 스크롤바 위치 및 크기 업데이트
@@ -332,6 +365,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 return;
             }
 
+            // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
+            if (!finalAutoHideConfig.enabled) {
+                setScrollbarVisible(true);
+                clearHideTimer();
+            }
+
             const containerHeight = scrollableElement.clientHeight;
             const contentHeight = scrollableElement.scrollHeight;
             const scrollTop = scrollableElement.scrollTop;
@@ -343,8 +382,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 element: scrollableElement,
             });
 
-            // 화살표와 간격 공간 계산 (화살표 + 위아래여백 4px + 화살표간격 4px씩, 화살표 없어도 위아래 4px씩 여백)
-            const arrowSpace = showArrows ? finalThumbWidth * 2 + 16 : 8;
+            // 화살표와 간격 공간 계산 (화살표 + 위아래 마진, 화살표 없어도 위아래 마진)
+            const arrowSpace = showArrows
+                ? finalThumbWidth * 2 + finalTrackConfig.margin * 4
+                : finalTrackConfig.margin * 2;
 
             // 썸 높이 계산 (사용자 설정 최소 높이 사용, 화살표 공간 제외)
             const availableHeight = containerHeight - arrowSpace;
@@ -371,6 +412,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             showArrows,
             finalThumbWidth,
             thumbMinHeight,
+            finalAutoHideConfig.enabled,
         ]);
 
         // 썸 드래그 시작
@@ -444,9 +486,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const handleMouseUp = useCallback(() => {
             setIsDragging(false);
             if (isScrollable()) {
-                setHideTimer(hideDelay); // 기본 숨김 시간 적용
+                setHideTimer(finalAutoHideConfig.delay); // 기본 숨김 시간 적용
             }
-        }, [isScrollable, setHideTimer, hideDelay]);
+        }, [isScrollable, setHideTimer, finalAutoHideConfig.delay]);
 
         // 트랙 클릭으로 스크롤 점프
         const handleTrackClick = useCallback(
@@ -496,12 +538,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
 
                 setScrollbarVisible(true);
-                setHideTimer(hideDelay);
+                setHideTimer(finalAutoHideConfig.delay);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
                 containerRef.current?.focus();
             },
-            [updateScrollbar, setHideTimer, hideDelay, findScrollableElement]
+            [
+                updateScrollbar,
+                setHideTimer,
+                finalAutoHideConfig.delay,
+                findScrollableElement,
+            ]
         );
 
         // 위쪽 화살표 클릭 핸들러
@@ -521,12 +568,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
 
                 setScrollbarVisible(true);
-                setHideTimer(hideDelay);
+                setHideTimer(finalAutoHideConfig.delay);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
                 containerRef.current?.focus();
             },
-            [updateScrollbar, setHideTimer, arrowStep, hideDelay]
+            [
+                updateScrollbar,
+                setHideTimer,
+                arrowStep,
+                finalAutoHideConfig.delay,
+            ]
         );
 
         // 아래쪽 화살표 클릭 핸들러
@@ -550,12 +602,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
 
                 setScrollbarVisible(true);
-                setHideTimer(hideDelay);
+                setHideTimer(finalAutoHideConfig.delay);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
                 containerRef.current?.focus();
             },
-            [updateScrollbar, setHideTimer, arrowStep, hideDelay]
+            [
+                updateScrollbar,
+                setHideTimer,
+                arrowStep,
+                finalAutoHideConfig.delay,
+            ]
         );
 
         // 드래그 스크롤 시작
@@ -640,9 +697,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const handleDragScrollEnd = useCallback(() => {
             setIsDragScrolling(false);
             if (isScrollable()) {
-                setHideTimer(hideDelay);
+                setHideTimer(finalAutoHideConfig.delay);
             }
-        }, [isScrollable, setHideTimer, hideDelay]);
+        }, [isScrollable, setHideTimer, finalAutoHideConfig.delay]);
 
         // 스크롤 이벤트 리스너 (externalScrollContainer 우선 사용)
         useEffect(() => {
@@ -654,7 +711,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setScrollbarVisible(true);
 
                 // 휠 스크롤 중이면 빠른 숨김, 아니면 기본 숨김 시간 적용
-                const delay = isWheelScrolling ? hideDelayOnWheel : hideDelay;
+                const delay = isWheelScrolling
+                    ? finalAutoHideConfig.delayOnWheel
+                    : finalAutoHideConfig.delay;
                 setHideTimer(delay);
 
                 if (onScroll) {
@@ -733,8 +792,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             onScroll,
             clearHideTimer,
             setHideTimer,
-            hideDelay,
-            hideDelayOnWheel,
+            finalAutoHideConfig,
             isWheelScrolling,
         ]);
 
@@ -798,13 +856,18 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     containerRef: !!containerRef.current,
                     contentRef: !!contentRef.current,
                     isScrollable: isScrollable(),
+                    autoHideEnabled: finalAutoHideConfig.enabled,
                 });
                 // 초기화 후 스크롤바 업데이트 (썸 높이 정확하게 계산)
                 updateScrollbar();
+                // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
+                if (!finalAutoHideConfig.enabled && isScrollable()) {
+                    setScrollbarVisible(true);
+                }
             }, 100);
 
             return () => clearTimeout(timer);
-        }, [isScrollable]);
+        }, [isScrollable, updateScrollbar, finalAutoHideConfig.enabled]);
 
         // Resize observer로 크기 변경 감지
         useEffect(() => {
@@ -944,7 +1007,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         onMouseLeave={() => {
                             console.log("Track hover leave", { isDragging });
                             if (!isDragging) {
-                                setHideTimer(hideDelay);
+                                setHideTimer(finalAutoHideConfig.delay);
                             }
                         }}
                         style={{
@@ -973,21 +1036,30 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                 style={{
                                     position: "absolute",
                                     top: showArrows
-                                        ? `${finalThumbConfig.width + 8}px`
-                                        : "4px",
-                                    right: `${
-                                        (adjustedTrackWidth -
-                                            finalThumbConfig.width) /
-                                        2
-                                    }px`, // 트랙 가운데 정렬
+                                        ? `${
+                                              finalThumbConfig.width +
+                                              finalTrackConfig.margin * 2
+                                          }px`
+                                        : `${finalTrackConfig.margin}px`,
+                                    right:
+                                        finalTrackConfig.alignment === "right"
+                                            ? "0px"
+                                            : `${
+                                                  (adjustedTrackWidth -
+                                                      finalThumbConfig.width) /
+                                                  2
+                                              }px`, // 트랙 정렬
                                     width: `${finalThumbConfig.width}px`,
                                     height: showArrows
                                         ? `calc(100% - ${
-                                              finalThumbConfig.width * 2 + 16
+                                              finalThumbConfig.width * 2 +
+                                              finalTrackConfig.margin * 4
                                           }px)`
-                                        : "calc(100% - 8px)",
+                                        : `calc(100% - ${
+                                              finalTrackConfig.margin * 2
+                                          }px)`,
                                     backgroundColor: finalTrackConfig.color,
-                                    borderRadius: `${finalThumbConfig.radius}px`,
+                                    borderRadius: `${finalTrackConfig.radius}px`,
                                     cursor: "pointer",
                                 }}
                             />
@@ -998,28 +1070,41 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             ref={thumbRef}
                             className="overlay-scrollbar-thumb"
                             onMouseDown={handleThumbMouseDown}
+                            onMouseEnter={() => setIsThumbHovered(true)}
+                            onMouseLeave={() => setIsThumbHovered(false)}
                             style={{
                                 position: "absolute",
                                 top: `${
-                                    (showArrows ? finalThumbWidth + 8 : 4) +
-                                    thumbTop
+                                    (showArrows
+                                        ? finalThumbWidth +
+                                          finalTrackConfig.margin * 2
+                                        : finalTrackConfig.margin) + thumbTop
                                 }px`,
-                                right: `${
-                                    (adjustedTrackWidth - finalThumbWidth) / 2
-                                }px`, // 트랙 가운데 정렬
+                                right:
+                                    finalTrackConfig.alignment === "right"
+                                        ? "0px"
+                                        : `${
+                                              (adjustedTrackWidth -
+                                                  finalThumbWidth) /
+                                              2
+                                          }px`, // 트랙 정렬
                                 width: `${finalThumbWidth}px`,
                                 height: `${Math.max(
                                     thumbHeight,
                                     thumbMinHeight
                                 )}px`,
-                                backgroundColor: isDragging
-                                    ? finalThumbConfig.activeColor
-                                    : finalThumbConfig.color,
+                                backgroundColor:
+                                    isThumbHovered || isDragging
+                                        ? finalThumbConfig.hoverColor
+                                        : finalThumbConfig.color,
+                                opacity:
+                                    isThumbHovered || isDragging
+                                        ? finalThumbConfig.hoverOpacity
+                                        : finalThumbConfig.opacity,
                                 borderRadius: `${finalThumbConfig.radius}px`,
                                 cursor: "pointer",
-                                transition: isDragging
-                                    ? "none"
-                                    : "background-color 0.2s ease-in-out",
+                                transition:
+                                    "background-color 0.2s ease-in-out, opacity 0.2s ease-in-out",
                             }}
                         />
                     </div>
@@ -1034,10 +1119,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         onMouseLeave={() => setHoveredArrow(null)}
                         style={{
                             position: "absolute",
-                            top: "4px",
-                            right: `${
-                                (adjustedTrackWidth - finalThumbWidth) / 2
-                            }px`, // 트랙 가운데 정렬
+                            top: `${finalTrackConfig.margin}px`,
+                            right:
+                                finalTrackConfig.alignment === "right"
+                                    ? "0px"
+                                    : `${
+                                          (adjustedTrackWidth -
+                                              finalThumbWidth) /
+                                          2
+                                      }px`, // 트랙 정렬
                             width: `${finalThumbWidth}px`,
                             height: `${finalThumbWidth}px`,
                             cursor: "pointer",
@@ -1050,11 +1140,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             )}px`,
                             color:
                                 hoveredArrow === "up"
-                                    ? finalArrowsConfig.activeColor
+                                    ? finalArrowsConfig.hoverColor
                                     : finalArrowsConfig.color,
                             userSelect: "none",
                             zIndex: 1001,
-                            opacity: scrollbarVisible ? 1 : 0,
+                            opacity: scrollbarVisible
+                                ? hoveredArrow === "up"
+                                    ? finalArrowsConfig.hoverOpacity
+                                    : finalArrowsConfig.opacity
+                                : 0,
                             transition:
                                 "opacity 0.2s ease-in-out, color 0.15s ease-in-out",
                         }}
@@ -1072,10 +1166,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         onMouseLeave={() => setHoveredArrow(null)}
                         style={{
                             position: "absolute",
-                            bottom: "4px",
-                            right: `${
-                                (adjustedTrackWidth - finalThumbWidth) / 2
-                            }px`, // 트랙 가운데 정렬
+                            bottom: `${finalTrackConfig.margin}px`,
+                            right:
+                                finalTrackConfig.alignment === "right"
+                                    ? "0px"
+                                    : `${
+                                          (adjustedTrackWidth -
+                                              finalThumbWidth) /
+                                          2
+                                      }px`, // 트랙 정렬
                             width: `${finalThumbWidth}px`,
                             height: `${finalThumbWidth}px`,
                             cursor: "pointer",
@@ -1088,11 +1187,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             )}px`,
                             color:
                                 hoveredArrow === "down"
-                                    ? finalArrowsConfig.activeColor
+                                    ? finalArrowsConfig.hoverColor
                                     : finalArrowsConfig.color,
                             userSelect: "none",
                             zIndex: 1001,
-                            opacity: scrollbarVisible ? 1 : 0,
+                            opacity: scrollbarVisible
+                                ? hoveredArrow === "down"
+                                    ? finalArrowsConfig.hoverOpacity
+                                    : finalArrowsConfig.opacity
+                                : 0,
                             transition:
                                 "opacity 0.2s ease-in-out, color 0.15s ease-in-out",
                         }}

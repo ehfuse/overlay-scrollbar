@@ -66,20 +66,33 @@ v1.3.0부터는 관련 설정들을 객체로 그룹화하여 더 깔끔한 API�
 <OverlayScrollbar
     thumb={{
         width: 8,
-        color: "rgba(100, 100, 100, 0.7)",
-        activeColor: "rgba(100, 100, 100, 0.9)",
+        color: "#606060",
+        opacity: 0.6,
+        hoverColor: "#606060",
+        hoverOpacity: 1.0,
     }}
     track={{
         width: 16,
-        color: "rgba(0, 0, 0, 0.1)",
+        color: "rgba(128, 128, 128, 0.1)",
+        alignment: "center",
+        radius: 4,
+        margin: 4,
     }}
     arrows={{
         visible: true,
         step: 50,
+        color: "#808080",
+        opacity: 0.6,
+        hoverOpacity: 1.0,
     }}
     dragScroll={{
         enabled: true,
         excludeClasses: ["no-drag"],
+    }}
+    autoHide={{
+        enabled: true,
+        delay: 1500,
+        delayOnWheel: 700,
     }}
 >
     {/* 콘텐츠 */}
@@ -261,8 +274,10 @@ const MyComponent: React.FC = () => {
     const thumbConfig: ThumbConfig = {
         width: 8,
         radius: 6,
-        color: "rgba(100, 100, 100, 0.7)",
-        activeColor: "rgba(100, 100, 100, 0.9)",
+        color: "#606060",
+        opacity: 0.6,
+        hoverColor: "#404040",
+        hoverOpacity: 1.0,
     };
 
     const trackConfig: TrackConfig = {
@@ -321,49 +336,55 @@ const MyComponent: React.FC = () => {
 
 ### Props
 
-| 속성               | 타입                     | 기본값 | 설명                      |
-| ------------------ | ------------------------ | ------ | ------------------------- |
-| `children`         | `ReactNode`              | -      | 스크롤할 콘텐츠           |
-| `className`        | `string`                 | -      | 추가 CSS 클래스           |
-| `style`            | `React.CSSProperties`    | -      | 추가 인라인 스타일        |
-| `onScroll`         | `(event: Event) => void` | -      | 스크롤 이벤트 콜백        |
-| `scrollContainer`  | `HTMLElement \| null`    | -      | 외부 스크롤 컨테이너      |
-| `thumb`            | `ThumbConfig`            | `{}`   | 썸 관련 설정 객체         |
-| `track`            | `TrackConfig`            | `{}`   | 트랙 관련 설정 객체       |
-| `arrows`           | `ArrowsConfig`           | `{}`   | 화살표 관련 설정 객체     |
-| `dragScroll`       | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체   |
-| `showScrollbar`    | `boolean`                | `true` | 스크롤바 표시 여부        |
-| `hideDelay`        | `number`                 | `1500` | 자동 숨김 지연 시간 (ms)  |
-| `hideDelayOnWheel` | `number`                 | `700`  | 휠 후 숨김 지연 시간 (ms) |
+| 속성              | 타입                     | 기본값 | 설명                    |
+| ----------------- | ------------------------ | ------ | ----------------------- |
+| `children`        | `ReactNode`              | -      | 스크롤할 콘텐츠         |
+| `className`       | `string`                 | -      | 추가 CSS 클래스         |
+| `style`           | `React.CSSProperties`    | -      | 추가 인라인 스타일      |
+| `onScroll`        | `(event: Event) => void` | -      | 스크롤 이벤트 콜백      |
+| `scrollContainer` | `HTMLElement \| null`    | -      | 외부 스크롤 컨테이너    |
+| `thumb`           | `ThumbConfig`            | `{}`   | 썸 관련 설정 객체       |
+| `track`           | `TrackConfig`            | `{}`   | 트랙 관련 설정 객체     |
+| `arrows`          | `ArrowsConfig`           | `{}`   | 화살표 관련 설정 객체   |
+| `dragScroll`      | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체 |
+| `autoHide`        | `AutoHideConfig`         | `{}`   | 자동 숨김 설정 객체     |
+| `showScrollbar`   | `boolean`                | `true` | 스크롤바 표시 여부      |
 
 ### 설정 객체 속성
 
 #### ThumbConfig
 
-| 속성          | 타입     | 기본값                       | 설명                       |
-| ------------- | -------- | ---------------------------- | -------------------------- |
-| `width`       | `number` | `8`                          | 썸 너비 (px)               |
-| `minHeight`   | `number` | `50`                         | 썸 최소 높이 (px)          |
-| `radius`      | `number` | `width / 2`                  | 썸 둥근 모서리 반지름 (px) |
-| `color`       | `string` | `"rgba(128, 128, 128, 0.6)"` | 썸 기본 색상               |
-| `activeColor` | `string` | `"rgba(128, 128, 128, 0.9)"` | 썸 드래그시 색상           |
+| 속성           | 타입     | 기본값      | 설명                       |
+| -------------- | -------- | ----------- | -------------------------- |
+| `width`        | `number` | `8`         | 썸 너비 (px)               |
+| `minHeight`    | `number` | `50`        | 썸 최소 높이 (px)          |
+| `radius`       | `number` | `width / 2` | 썸 둥근 모서리 반지름 (px) |
+| `color`        | `string` | `"#606060"` | 썸 기본 색상               |
+| `opacity`      | `number` | `0.6`       | 썸 기본 투명도             |
+| `hoverColor`   | `string` | `color`     | 썸 호버/드래그 시 색상     |
+| `hoverOpacity` | `number` | `1.0`       | 썸 호버/드래그 시 투명도   |
 
 #### TrackConfig
 
-| 속성      | 타입      | 기본값                       | 설명                     |
-| --------- | --------- | ---------------------------- | ------------------------ |
-| `width`   | `number`  | `16`                         | 트랙 호버 영역 너비 (px) |
-| `color`   | `string`  | `"rgba(128, 128, 128, 0.1)"` | 트랙 배경 색상           |
-| `visible` | `boolean` | `true`                       | 트랙 배경 표시 여부      |
+| 속성        | 타입                  | 기본값                       | 설명                     |
+| ----------- | --------------------- | ---------------------------- | ------------------------ |
+| `width`     | `number`              | `16`                         | 트랙 호버 영역 너비 (px) |
+| `color`     | `string`              | `"rgba(128, 128, 128, 0.1)"` | 트랙 배경 색상           |
+| `visible`   | `boolean`             | `true`                       | 트랙 배경 표시 여부      |
+| `alignment` | `"center" \| "right"` | `"center"`                   | 트랙 정렬 방식           |
+| `radius`    | `number`              | `thumb.radius \| 4`          | 트랙 둥근 모서리 (px)    |
+| `margin`    | `number`              | `4`                          | 트랙 상하 마진 (px)      |
 
 #### ArrowsConfig
 
-| 속성          | 타입      | 기본값                       | 설명                           |
-| ------------- | --------- | ---------------------------- | ------------------------------ |
-| `visible`     | `boolean` | `false`                      | 화살표 버튼 표시 여부          |
-| `step`        | `number`  | `50`                         | 화살표 클릭당 스크롤 거리 (px) |
-| `color`       | `string`  | `"rgba(128, 128, 128, 0.8)"` | 화살표 기본 색상               |
-| `activeColor` | `string`  | `"rgba(64, 64, 64, 1.0)"`    | 화살표 호버시 색상             |
+| 속성           | 타입      | 기본값      | 설명                           |
+| -------------- | --------- | ----------- | ------------------------------ |
+| `visible`      | `boolean` | `false`     | 화살표 버튼 표시 여부          |
+| `step`         | `number`  | `50`        | 화살표 클릭당 스크롤 거리 (px) |
+| `color`        | `string`  | `"#808080"` | 화살표 기본 색상               |
+| `opacity`      | `number`  | `0.6`       | 화살표 기본 투명도             |
+| `hoverColor`   | `string`  | `color`     | 화살표 호버 시 색상            |
+| `hoverOpacity` | `number`  | `1.0`       | 화살표 호버 시 투명도          |
 
 #### DragScrollConfig
 
@@ -372,6 +393,14 @@ const MyComponent: React.FC = () => {
 | `enabled`          | `boolean`  | `true` | 드래그 스크롤 활성화 여부       |
 | `excludeClasses`   | `string[]` | `[]`   | 드래그 스크롤 제외 클래스들     |
 | `excludeSelectors` | `string[]` | `[]`   | 드래그 스크롤 제외 CSS 셀렉터들 |
+
+#### AutoHideConfig
+
+| 속성           | 타입      | 기본값 | 설명                      |
+| -------------- | --------- | ------ | ------------------------- |
+| `enabled`      | `boolean` | `true` | 자동 숨김 활성화 여부     |
+| `delay`        | `number`  | `1500` | 자동 숨김 지연 시간 (ms)  |
+| `delayOnWheel` | `number`  | `700`  | 휠 후 숨김 지연 시간 (ms) |
 
 ### 주요 인터페이스
 
@@ -388,38 +417,50 @@ interface OverlayScrollbarProps {
     track?: TrackConfig;
     arrows?: ArrowsConfig;
     dragScroll?: DragScrollConfig;
+    autoHide?: AutoHideConfig;
 
     // 기타 설정
     showScrollbar?: boolean; // 기본값: true
-    hideDelay?: number; // 기본값: 1500ms
-    hideDelayOnWheel?: number; // 기본값: 700ms
 }
 
 interface ThumbConfig {
     width?: number; // 기본값: 8px
     minHeight?: number; // 기본값: 50px
     radius?: number; // 기본값: width / 2
-    color?: string; // 기본값: "rgba(128, 128, 128, 0.6)"
-    activeColor?: string; // 기본값: "rgba(128, 128, 128, 0.9)"
+    color?: string; // 기본값: "#606060"
+    opacity?: number; // 기본값: 0.6
+    hoverColor?: string; // 기본값: color
+    hoverOpacity?: number; // 기본값: 1.0
 }
 
 interface TrackConfig {
     width?: number; // 기본값: 16px
     color?: string; // 기본값: "rgba(128, 128, 128, 0.1)"
-    visible?: boolean; // 기본값: true
+    visible?: boolean; // 기본가: true
+    alignment?: "center" | "right"; // 기본값: "center"
+    radius?: number; // 기본값: thumb.radius 또는 4px
+    margin?: number; // 기본값: 4px
 }
 
 interface ArrowsConfig {
-    visible?: boolean; // 기본값: false
-    step?: number; // 기본값: 50px
-    color?: string; // 기본값: "rgba(128, 128, 128, 0.8)"
-    activeColor?: string; // 기본값: "rgba(64, 64, 64, 1.0)"
+    visible?: boolean; // 기본가: false
+    step?: number; // 기본가: 50px
+    color?: string; // 기본가: "#808080"
+    opacity?: number; // 기본가: 0.6
+    hoverColor?: string; // 기본값: color
+    hoverOpacity?: number; // 기본가: 1.0
 }
 
 interface DragScrollConfig {
-    enabled?: boolean; // 기본값: true
+    enabled?: boolean; // 기본가: true
     excludeClasses?: string[]; // 추가 제외 클래스들
     excludeSelectors?: string[]; // 추가 제외 셀렉터들
+}
+
+interface AutoHideConfig {
+    enabled?: boolean; // 기본가: true
+    delay?: number; // 기본가: 1500ms
+    delayOnWheel?: number; // 기본가: 700ms
 }
 ```
 

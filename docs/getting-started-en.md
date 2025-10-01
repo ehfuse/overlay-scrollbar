@@ -66,20 +66,33 @@ Starting from v1.3.0, related settings are grouped into objects for a cleaner AP
 <OverlayScrollbar
     thumb={{
         width: 8,
-        color: "rgba(100, 100, 100, 0.7)",
-        activeColor: "rgba(100, 100, 100, 0.9)",
+        color: "#606060",
+        opacity: 0.6,
+        hoverColor: "#606060",
+        hoverOpacity: 1.0,
     }}
     track={{
         width: 16,
-        color: "rgba(0, 0, 0, 0.1)",
+        color: "rgba(128, 128, 128, 0.1)",
+        alignment: "center",
+        radius: 4,
+        margin: 4,
     }}
     arrows={{
         visible: true,
         step: 50,
+        color: "#808080",
+        opacity: 0.6,
+        hoverOpacity: 1.0,
     }}
     dragScroll={{
         enabled: true,
         excludeClasses: ["no-drag"],
+    }}
+    autoHide={{
+        enabled: true,
+        delay: 1500,
+        delayOnWheel: 700,
     }}
 >
     {/* Content */}
@@ -264,8 +277,10 @@ const MyComponent: React.FC = () => {
     const thumbConfig: ThumbConfig = {
         width: 8,
         radius: 6,
-        color: "rgba(100, 100, 100, 0.7)",
-        activeColor: "rgba(100, 100, 100, 0.9)",
+        color: "#606060",
+        opacity: 0.6,
+        hoverColor: "#404040",
+        hoverOpacity: 1.0,
     };
 
     const trackConfig: TrackConfig = {
@@ -324,49 +339,55 @@ const MyComponent: React.FC = () => {
 
 ### Props
 
-| Property           | Type                     | Default | Description                 |
-| ------------------ | ------------------------ | ------- | --------------------------- |
-| `children`         | `ReactNode`              | -       | Content to scroll           |
-| `className`        | `string`                 | -       | Additional CSS class        |
-| `style`            | `React.CSSProperties`    | -       | Additional inline style     |
-| `onScroll`         | `(event: Event) => void` | -       | Scroll event callback       |
-| `scrollContainer`  | `HTMLElement \| null`    | -       | External scroll container   |
-| `thumb`            | `ThumbConfig`            | `{}`    | Thumb configuration object  |
-| `track`            | `TrackConfig`            | `{}`    | Track configuration object  |
-| `arrows`           | `ArrowsConfig`           | `{}`    | Arrows configuration object |
-| `dragScroll`       | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
-| `showScrollbar`    | `boolean`                | `true`  | Show scrollbar              |
-| `hideDelay`        | `number`                 | `1500`  | Auto-hide delay (ms)        |
-| `hideDelayOnWheel` | `number`                 | `700`   | Hide delay after wheel (ms) |
+| Property          | Type                     | Default | Description                 |
+| ----------------- | ------------------------ | ------- | --------------------------- |
+| `children`        | `ReactNode`              | -       | Content to scroll           |
+| `className`       | `string`                 | -       | Additional CSS class        |
+| `style`           | `React.CSSProperties`    | -       | Additional inline style     |
+| `onScroll`        | `(event: Event) => void` | -       | Scroll event callback       |
+| `scrollContainer` | `HTMLElement \| null`    | -       | External scroll container   |
+| `thumb`           | `ThumbConfig`            | `{}`    | Thumb configuration object  |
+| `track`           | `TrackConfig`            | `{}`    | Track configuration object  |
+| `arrows`          | `ArrowsConfig`           | `{}`    | Arrows configuration object |
+| `dragScroll`      | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
+| `autoHide`        | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
+| `showScrollbar`   | `boolean`                | `true`  | Show scrollbar              |
 
 ### Configuration Object Properties
 
 #### ThumbConfig
 
-| Property      | Type     | Default                      | Description               |
-| ------------- | -------- | ---------------------------- | ------------------------- |
-| `width`       | `number` | `8`                          | Thumb width (px)          |
-| `minHeight`   | `number` | `50`                         | Thumb minimum height (px) |
-| `radius`      | `number` | `width / 2`                  | Thumb border radius (px)  |
-| `color`       | `string` | `"rgba(128, 128, 128, 0.6)"` | Thumb default color       |
-| `activeColor` | `string` | `"rgba(128, 128, 128, 0.9)"` | Thumb color when dragging |
+| Property       | Type     | Default     | Description                 |
+| -------------- | -------- | ----------- | --------------------------- |
+| `width`        | `number` | `8`         | Thumb width (px)            |
+| `minHeight`    | `number` | `50`        | Thumb minimum height (px)   |
+| `radius`       | `number` | `width / 2` | Thumb border radius (px)    |
+| `color`        | `string` | `"#606060"` | Thumb base color            |
+| `opacity`      | `number` | `0.6`       | Thumb base opacity          |
+| `hoverColor`   | `string` | `color`     | Thumb color on hover/drag   |
+| `hoverOpacity` | `number` | `1.0`       | Thumb opacity on hover/drag |
 
 #### TrackConfig
 
-| Property  | Type      | Default                      | Description                 |
-| --------- | --------- | ---------------------------- | --------------------------- |
-| `width`   | `number`  | `16`                         | Track hover area width (px) |
-| `color`   | `string`  | `"rgba(128, 128, 128, 0.1)"` | Track background color      |
-| `visible` | `boolean` | `true`                       | Show track background       |
+| Property    | Type                  | Default                      | Description                  |
+| ----------- | --------------------- | ---------------------------- | ---------------------------- |
+| `width`     | `number`              | `16`                         | Track hover area width (px)  |
+| `color`     | `string`              | `"rgba(128, 128, 128, 0.1)"` | Track background color       |
+| `visible`   | `boolean`             | `true`                       | Show track background        |
+| `alignment` | `"center" \| "right"` | `"center"`                   | Track alignment              |
+| `radius`    | `number`              | `thumb.radius \| 4`          | Track border radius (px)     |
+| `margin`    | `number`              | `4`                          | Track top/bottom margin (px) |
 
 #### ArrowsConfig
 
-| Property      | Type      | Default                      | Description                    |
-| ------------- | --------- | ---------------------------- | ------------------------------ |
-| `visible`     | `boolean` | `false`                      | Show arrow buttons             |
-| `step`        | `number`  | `50`                         | Scroll distance per click (px) |
-| `color`       | `string`  | `"rgba(128, 128, 128, 0.8)"` | Arrow default color            |
-| `activeColor` | `string`  | `"rgba(64, 64, 64, 1.0)"`    | Arrow color on hover           |
+| Property       | Type      | Default     | Description                    |
+| -------------- | --------- | ----------- | ------------------------------ |
+| `visible`      | `boolean` | `false`     | Show arrow buttons             |
+| `step`         | `number`  | `50`        | Scroll distance per click (px) |
+| `color`        | `string`  | `"#808080"` | Arrow base color               |
+| `opacity`      | `number`  | `0.6`       | Arrow base opacity             |
+| `hoverColor`   | `string`  | `color`     | Arrow color on hover           |
+| `hoverOpacity` | `number`  | `1.0`       | Arrow opacity on hover         |
 
 #### DragScrollConfig
 
@@ -375,6 +396,14 @@ const MyComponent: React.FC = () => {
 | `enabled`          | `boolean`  | `true`  | Enable drag scroll                        |
 | `excludeClasses`   | `string[]` | `[]`    | Classes to exclude from drag scroll       |
 | `excludeSelectors` | `string[]` | `[]`    | CSS selectors to exclude from drag scroll |
+
+#### AutoHideConfig
+
+| Property       | Type      | Default | Description                      |
+| -------------- | --------- | ------- | -------------------------------- |
+| `enabled`      | `boolean` | `true`  | Enable auto-hide                 |
+| `delay`        | `number`  | `1500`  | Auto-hide delay (ms)             |
+| `delayOnWheel` | `number`  | `700`   | Auto-hide delay after wheel (ms) |
 
 ### Main Interfaces
 
@@ -391,38 +420,50 @@ interface OverlayScrollbarProps {
     track?: TrackConfig;
     arrows?: ArrowsConfig;
     dragScroll?: DragScrollConfig;
+    autoHide?: AutoHideConfig;
 
     // Other settings
     showScrollbar?: boolean; // default: true
-    hideDelay?: number; // default: 1500ms
-    hideDelayOnWheel?: number; // default: 700ms
 }
 
 interface ThumbConfig {
     width?: number; // default: 8px
     minHeight?: number; // default: 50px
     radius?: number; // default: width / 2
-    color?: string; // default: "rgba(128, 128, 128, 0.6)"
-    activeColor?: string; // default: "rgba(128, 128, 128, 0.9)"
+    color?: string; // default: "#606060"
+    opacity?: number; // default: 0.6
+    hoverColor?: string; // default: color
+    hoverOpacity?: number; // default: 1.0
 }
 
 interface TrackConfig {
     width?: number; // default: 16px
     color?: string; // default: "rgba(128, 128, 128, 0.1)"
     visible?: boolean; // default: true
+    alignment?: "center" | "right"; // default: "center"
+    radius?: number; // default: thumb.radius or 4px
+    margin?: number; // default: 4px
 }
 
 interface ArrowsConfig {
     visible?: boolean; // default: false
     step?: number; // default: 50px
-    color?: string; // default: "rgba(128, 128, 128, 0.8)"
-    activeColor?: string; // default: "rgba(64, 64, 64, 1.0)"
+    color?: string; // default: "#808080"
+    opacity?: number; // default: 0.6
+    hoverColor?: string; // default: color
+    hoverOpacity?: number; // default: 1.0
 }
 
 interface DragScrollConfig {
     enabled?: boolean; // default: true
     excludeClasses?: string[]; // additional exclude classes
     excludeSelectors?: string[]; // additional exclude selectors
+}
+
+interface AutoHideConfig {
+    enabled?: boolean; // default: true
+    delay?: number; // default: 1500ms
+    delayOnWheel?: number; // default: 700ms
 }
 ```
 
