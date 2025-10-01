@@ -150,7 +150,8 @@ function App() {
 
                         <OverlayScrollbar
                             showScrollbar={showScrollbar}
-                            showArrows={true}
+                            arrows={{ visible: true }}
+                            dragScroll={{ enabled: true }}
                             style={{
                                 height: "600px",
                                 border: "1px solid #ddd",

@@ -6,7 +6,9 @@ import { readFileSync } from "fs";
 
 const packageJson = JSON.parse(readFileSync("./package.json", "utf-8"));
 
-export default [
+const isWatchMode = process.env.ROLLUP_WATCH === "true";
+
+const config = [
     {
         input: "index.ts",
         output: [
@@ -33,9 +35,15 @@ export default [
         ],
         external: ["react", "react-dom"],
     },
-    {
+];
+
+// watch 모드가 아닐 때만 타입 정의 번들링 추가
+if (!isWatchMode) {
+    config.push({
         input: "dist/index.d.ts",
         output: [{ file: "dist/index.d.ts", format: "esm" }],
         plugins: [dts()],
-    },
-];
+    });
+}
+
+export default config;
