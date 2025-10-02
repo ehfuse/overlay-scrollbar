@@ -82,7 +82,9 @@ export interface AutoHideConfig {
 
 export interface OverlayScrollbarProps {
     className?: string;
-    style?: React.CSSProperties;
+    style?: React.CSSProperties; // wrapper div에 적용할 스타일
+    containerStyle?: React.CSSProperties; // 스크롤 컨테이너 div에 적용할 스타일
+    contentStyle?: React.CSSProperties; // 내부 content div에 적용할 스타일
     children: ReactNode;
     onScroll?: (event: Event) => void;
 
@@ -118,6 +120,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         {
             className = "",
             style = {},
+            containerStyle = {},
+            contentStyle = {},
             children,
             onScroll,
 
@@ -1138,16 +1142,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
                         userSelect: isDragScrolling ? "none" : "auto", // 드래그 중 텍스트 선택 방지
+                        ...containerStyle, // 사용자 정의 스타일 적용
                     }}
                 >
                     <div
                         ref={contentRef}
                         className="overlay-scrollbar-content"
                         style={{
-                            height: "100%", // min-height 대신 height 사용
                             minHeight: 0, // flex shrink 허용
                             display: "flex", // flex 컨테이너로 설정
                             flexDirection: "column", // 세로 방향 정렬
+                            ...contentStyle, // 사용자 정의 스타일 적용
                         }}
                     >
                         {children}
