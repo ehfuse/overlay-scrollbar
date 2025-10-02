@@ -1144,6 +1144,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         ref={contentRef}
                         className="overlay-scrollbar-content"
                         style={{
+                            height: "100%", // min-height 대신 height 사용
                             minHeight: 0, // flex shrink 허용
                             display: "flex", // flex 컨테이너로 설정
                             flexDirection: "column", // 세로 방향 정렬
