@@ -164,6 +164,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             };
         });
 
+        const wrapperRef = useRef<HTMLDivElement>(null);
         const containerRef = useRef<HTMLDivElement>(null);
         const contentRef = useRef<HTMLDivElement>(null);
         const scrollbarRef = useRef<HTMLDivElement>(null);
@@ -449,13 +450,26 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const contentHeight = scrollableElement.scrollHeight;
             const scrollTop = scrollableElement.scrollTop;
 
+            // wrapper의 패딩 계산 (상하 패딩만 필요)
+            let wrapperPaddingTopBottom = 0;
+            if (wrapperRef.current) {
+                const computedStyle = window.getComputedStyle(
+                    wrapperRef.current
+                );
+                const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+                const paddingBottom =
+                    parseFloat(computedStyle.paddingBottom) || 0;
+                wrapperPaddingTopBottom = paddingTop + paddingBottom;
+            }
+
             // 화살표와 간격 공간 계산 (화살표 + 위아래 마진, 화살표 없어도 위아래 마진)
             const arrowSpace = showArrows
                 ? finalThumbWidth * 2 + finalTrackConfig.margin * 4
                 : finalTrackConfig.margin * 2;
 
-            // 썸 높이 계산 (사용자 설정 최소 높이 사용, 화살표 공간 제외)
-            const availableHeight = containerHeight - arrowSpace;
+            // 썸 높이 계산 (사용자 설정 최소 높이 사용, 화살표 공간 제외, wrapper 패딩 추가)
+            const availableHeight =
+                containerHeight - arrowSpace + wrapperPaddingTopBottom;
             const scrollRatio = containerHeight / contentHeight;
             const calculatedThumbHeight = Math.max(
                 availableHeight * scrollRatio,
@@ -1113,6 +1127,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         return (
             <div
+                ref={wrapperRef}
                 className={`overlay-scrollbar-wrapper ${className}`}
                 style={{
                     display: "flex",

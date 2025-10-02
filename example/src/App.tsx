@@ -39,7 +39,7 @@ function App() {
     // 테스트용 긴 콘텐츠 생성
     const generateLongContent = () => {
         const items = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 30; i++) {
             items.push(
                 <div
                     key={i}
@@ -915,6 +915,7 @@ function App() {
                                 enabled: dragScrollEnabled,
                             }}
                             style={{
+                                padding: "20px",
                                 height: "600px",
                                 border: "1px solid #ddd",
                                 backgroundColor: "#fff",
