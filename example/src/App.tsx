@@ -2,6 +2,7 @@ import { useState } from "react";
 import OverlayScrollbar from "@/OverlayScrollbar";
 import SimpleTest from "./SimpleTest";
 import DialogTest from "./DialogTest";
+import NestedTest from "./NestedTest";
 import "./App.css";
 
 function App() {
@@ -131,6 +132,22 @@ function App() {
                         }}
                     >
                         Dialog Test
+                    </button>
+                    <button
+                        onClick={() => setCurrentTest("nested")}
+                        style={{
+                            margin: "5px",
+                            padding: "10px",
+                            backgroundColor:
+                                currentTest === "nested"
+                                    ? "#007bff"
+                                    : "#f0f0f0",
+                            color: currentTest === "nested" ? "white" : "black",
+                            border: "none",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Nested Test
                     </button>
                 </div>
             </header>
@@ -912,6 +929,7 @@ function App() {
 
                 {currentTest === "simple" && <SimpleTest />}
                 {currentTest === "dialog" && <DialogTest />}
+                {currentTest === "nested" && <NestedTest />}
             </div>
         </div>
     );

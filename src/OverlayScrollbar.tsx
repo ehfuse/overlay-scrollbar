@@ -175,6 +175,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const [dragStart, setDragStart] = useState({ y: 0, scrollTop: 0 });
         const [thumbHeight, setThumbHeight] = useState(0);
         const [thumbTop, setThumbTop] = useState(0);
+        const [hasScrollableContent, setHasScrollableContent] = useState(false);
 
         // 드래그 스크롤 상태
         const [isDragScrolling, setIsDragScrolling] = useState(false);
@@ -338,12 +339,48 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             }
 
             // children 요소에서 스크롤 가능한 요소 찾기
+            // 중첩된 OverlayScrollbar의 영역은 제외 (다른 OverlayScrollbar의 container는 스킵)
             const childScrollableElements =
                 containerRef.current.querySelectorAll(
                     '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller, [style*="overflow: auto"], [style*="overflow:auto"]'
                 );
+
             for (const child of childScrollableElements) {
                 const element = child as HTMLElement;
+
+                // 이 요소가 다른 OverlayScrollbar의 container인지 확인
+                // (자신의 containerRef는 아니어야 하고, overlay-scrollbar-container 클래스를 가진 경우)
+                if (
+                    element !== containerRef.current &&
+                    element.classList.contains("overlay-scrollbar-container")
+                ) {
+                    // 중첩된 OverlayScrollbar의 container이므로 스킵
+                    continue;
+                }
+
+                // 이 요소의 부모 중에 다른 OverlayScrollbar container가 있는지 확인
+                let parent: HTMLElement | null = element.parentElement;
+                let isNestedInAnotherScrollbar = false;
+
+                while (parent && parent !== containerRef.current) {
+                    if (
+                        parent.classList.contains(
+                            "overlay-scrollbar-container"
+                        ) &&
+                        parent !== containerRef.current
+                    ) {
+                        // 다른 OverlayScrollbar 내부의 요소이므로 스킵
+                        isNestedInAnotherScrollbar = true;
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+
+                if (isNestedInAnotherScrollbar) {
+                    continue;
+                }
+
+                // 스크롤 가능한 요소인지 확인
                 if (element.scrollHeight > element.clientHeight + 2) {
                     cachedScrollContainerRef.current = element;
                     return element;
@@ -384,15 +421,19 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 스크롤바 위치 및 크기 업데이트
         const updateScrollbar = useCallback(() => {
-            if (!scrollbarRef.current) return;
-
             const scrollableElement = findScrollableElement();
             if (!scrollableElement) {
                 // 스크롤 불가능하면 숨김
                 setScrollbarVisible(false);
+                setHasScrollableContent(false);
                 clearHideTimer();
                 return;
             }
+
+            // 스크롤 가능한 콘텐츠가 있음을 표시
+            setHasScrollableContent(true);
+
+            if (!scrollbarRef.current) return;
 
             // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
             if (!finalAutoHideConfig.enabled) {
@@ -757,12 +798,38 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             if (container && !scrollableElement) {
                 elementsToWatch.push(container);
 
-                // children 요소들의 스크롤도 감지
+                // children 요소들의 스크롤도 감지 (중첩된 OverlayScrollbar 제외)
                 const childScrollableElements = container.querySelectorAll(
                     '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller, [style*="overflow: auto"], [style*="overflow:auto"]'
                 );
                 childScrollableElements.forEach((child) => {
-                    elementsToWatch.push(child as HTMLElement);
+                    const element = child as HTMLElement;
+
+                    // 다른 OverlayScrollbar의 container는 제외
+                    if (
+                        element !== container &&
+                        element.classList.contains(
+                            "overlay-scrollbar-container"
+                        )
+                    ) {
+                        return;
+                    }
+
+                    // 부모 중에 다른 OverlayScrollbar container가 있으면 제외
+                    let parent: HTMLElement | null = element.parentElement;
+                    while (parent && parent !== container) {
+                        if (
+                            parent.classList.contains(
+                                "overlay-scrollbar-container"
+                            ) &&
+                            parent !== container
+                        ) {
+                            return; // 중첩된 OverlayScrollbar 내부이므로 제외
+                        }
+                        parent = parent.parentElement;
+                    }
+
+                    elementsToWatch.push(element);
                 });
             }
 
@@ -931,17 +998,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 컴포넌트 초기화 완료 표시 (hover 이벤트 활성화용)
         useLayoutEffect(() => {
-            const timer = setTimeout(() => {
-                setIsInitialized(true);
-                // 초기화 후 스크롤바 업데이트 (썸 높이 정확하게 계산)
-                updateScrollbar();
-                // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
-                if (!finalAutoHideConfig.enabled && isScrollable()) {
-                    setScrollbarVisible(true);
-                }
-            }, 0);
-
-            return () => clearTimeout(timer);
+            setIsInitialized(true);
+            // 초기화 직후 스크롤바 업데이트 (썸 높이 정확하게 계산)
+            updateScrollbar();
+            // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
+            if (!finalAutoHideConfig.enabled && isScrollable()) {
+                setScrollbarVisible(true);
+            }
         }, [isScrollable, updateScrollbar, finalAutoHideConfig.enabled]);
 
         // Resize observer로 크기 변경 감지
@@ -1092,7 +1155,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 </div>
 
                 {/* 커스텀 스크롤바 */}
-                {showScrollbar && (
+                {showScrollbar && hasScrollableContent && (
                     <div
                         ref={scrollbarRef}
                         className="overlay-scrollbar-track"
@@ -1205,7 +1268,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 )}
 
                 {/* 위쪽 화살표 버튼 */}
-                {showScrollbar && showArrows && (
+                {showScrollbar && hasScrollableContent && showArrows && (
                     <div
                         className="overlay-scrollbar-up-arrow"
                         onClick={handleUpArrowClick}
@@ -1252,7 +1315,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 )}
 
                 {/* 아래쪽 화살표 버튼 */}
-                {showScrollbar && showArrows && (
+                {showScrollbar && hasScrollableContent && showArrows && (
                     <div
                         className="overlay-scrollbar-down-arrow"
                         onClick={handleDownArrowClick}
