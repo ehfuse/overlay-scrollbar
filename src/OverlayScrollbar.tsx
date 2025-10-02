@@ -97,6 +97,7 @@ export interface OverlayScrollbarProps {
 
     // 기타 설정들
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
+    detectInnerScroll?: boolean; // children 내부의 스크롤 요소 감지 여부 (기본값: false, 가상 테이블 등에 사용)
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -134,6 +135,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             // 기타 설정들
             showScrollbar = true,
+            detectInnerScroll = false,
         },
         ref
     ) => {
@@ -341,6 +343,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             ) {
                 cachedScrollContainerRef.current = containerRef.current;
                 return containerRef.current;
+            }
+
+            // detectInnerScroll 옵션이 활성화된 경우에만 children 내부의 스크롤 요소 찾기
+            // (가상 테이블 등 내부에서 스크롤을 처리하는 경우에 사용)
+            if (!detectInnerScroll) {
+                return null;
             }
 
             // children 요소에서 스크롤 가능한 요소 찾기
