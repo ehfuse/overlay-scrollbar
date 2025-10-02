@@ -31,6 +31,7 @@ import React, {
     ReactNode,
     forwardRef,
     useImperativeHandle,
+    useLayoutEffect,
 } from "react";
 import { isTextInputElement } from "./utils/dragScrollUtils";
 
@@ -263,6 +264,26 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const showArrows = finalArrowsConfig.visible;
         const arrowStep = finalArrowsConfig.step;
 
+        // 포커스 유지 함수 (키보드 입력이 계속 작동하도록)
+        const maintainFocus = useCallback(() => {
+            if (!containerRef.current) return;
+
+            // 현재 포커스된 요소 확인
+            const activeElement = document.activeElement;
+
+            // 오버레이 스크롤바 내부에 이미 포커스된 요소가 있으면 스킵
+            if (
+                activeElement &&
+                containerRef.current.contains(activeElement) &&
+                activeElement !== containerRef.current
+            ) {
+                return;
+            }
+
+            // 포커스된 요소가 없거나 외부에 있으면 컨테이너에 포커스
+            containerRef.current.focus();
+        }, []);
+
         // ref를 통해 외부에서 스크롤 컨테이너에 접근할 수 있도록 함
         useImperativeHandle(
             ref,
@@ -437,9 +458,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setScrollbarVisible(true);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
-                containerRef.current?.focus();
+                maintainFocus();
             },
-            [findScrollableElement, clearHideTimer]
+            [findScrollableElement, clearHideTimer, maintainFocus]
         );
 
         // 썸 드래그 중
@@ -522,13 +543,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setHideTimer(finalAutoHideConfig.delay);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
-                containerRef.current?.focus();
+                maintainFocus();
             },
             [
                 updateScrollbar,
                 setHideTimer,
                 finalAutoHideConfig.delay,
                 findScrollableElement,
+                maintainFocus,
             ]
         );
 
@@ -552,13 +574,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setHideTimer(finalAutoHideConfig.delay);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
-                containerRef.current?.focus();
+                maintainFocus();
             },
             [
                 updateScrollbar,
                 setHideTimer,
                 arrowStep,
                 finalAutoHideConfig.delay,
+                maintainFocus,
             ]
         );
 
@@ -586,13 +609,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setHideTimer(finalAutoHideConfig.delay);
 
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
-                containerRef.current?.focus();
+                maintainFocus();
             },
             [
                 updateScrollbar,
                 setHideTimer,
                 arrowStep,
                 finalAutoHideConfig.delay,
+                maintainFocus,
             ]
         );
 
@@ -906,7 +930,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         }, [updateScrollbar]);
 
         // 컴포넌트 초기화 완료 표시 (hover 이벤트 활성화용)
-        useEffect(() => {
+        useLayoutEffect(() => {
             const timer = setTimeout(() => {
                 setIsInitialized(true);
                 // 초기화 후 스크롤바 업데이트 (썸 높이 정확하게 계산)
@@ -915,11 +939,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 if (!finalAutoHideConfig.enabled && isScrollable()) {
                     setScrollbarVisible(true);
                 }
-                // 스크롤 컨테이너에 자동 포커스 (키보드 네비게이션 활성화)
-                if (containerRef.current) {
-                    containerRef.current.focus();
-                }
-            }, 100);
+            }, 0);
 
             return () => clearTimeout(timer);
         }, [isScrollable, updateScrollbar, finalAutoHideConfig.enabled]);
