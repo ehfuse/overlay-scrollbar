@@ -1131,8 +1131,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     tabIndex={-1} // 키보드 포커스 가능하게 함
                     onMouseDown={handleDragScrollStart}
                     style={{
+                        display: "flex",
                         width: "100%", // 명시적 너비 설정
-                        height: "100%", // 부모의 전체 높이 사용
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
                         overflow: "auto", // 네이티브 스크롤 기능 유지
