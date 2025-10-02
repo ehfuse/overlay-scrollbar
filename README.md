@@ -80,7 +80,9 @@ function App() {
 interface OverlayScrollbarProps {
     children: ReactNode;
     className?: string;
-    style?: React.CSSProperties;
+    style?: React.CSSProperties; // Wrapper div styles
+    containerStyle?: React.CSSProperties; // Scroll container div styles
+    contentStyle?: React.CSSProperties; // Inner content div styles
     onScroll?: (event: Event) => void;
 
     // Grouped configuration objects

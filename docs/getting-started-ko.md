@@ -65,6 +65,9 @@ v1.3.0부터는 관련 설정들을 객체로 그룹화하여 더 깔끔한 API�
 
 ```tsx
 <OverlayScrollbar
+    style={{ height: "100%" }} // 래퍼 div 스타일
+    containerStyle={{ padding: "10px" }} // 스크롤 컨테이너 스타일
+    contentStyle={{ display: "flex", flexDirection: "column" }} // 콘텐츠 div 스타일
     thumb={{
         width: 8,
         color: "#606060",
@@ -362,20 +365,51 @@ const MyComponent: React.FC = () => {
 
 ## API 레퍼런스
 
+### 스타일 속성
+
+컴포넌트는 서로 다른 계층에 대한 세 가지 스타일 prop을 제공합니다:
+
+```tsx
+<OverlayScrollbar
+    style={{ height: "100%" }} // 래퍼 div에 적용
+    containerStyle={{ padding: "10px" }} // 스크롤 컨테이너에 적용
+    contentStyle={{ display: "flex" }} // 내부 콘텐츠에 적용
+>
+    {children}
+</OverlayScrollbar>
+```
+
+**DOM 구조:**
+
+```
+<div style={style}>                    ← 래퍼 (position: relative)
+  <div style={containerStyle}>         ← 스크롤 컨테이너 (overflow: auto)
+    <div style={contentStyle}>         ← 콘텐츠 래퍼
+      {children}
+    </div>
+  </div>
+  <div>                                ← 스크롤바 트랙 (position: absolute)
+    ...
+  </div>
+</div>
+```
+
 ### Props
 
-| 속성            | 타입                     | 기본값 | 설명                    |
-| --------------- | ------------------------ | ------ | ----------------------- |
-| `children`      | `ReactNode`              | -      | 스크롤할 콘텐츠         |
-| `className`     | `string`                 | -      | 추가 CSS 클래스         |
-| `style`         | `React.CSSProperties`    | -      | 추가 인라인 스타일      |
-| `onScroll`      | `(event: Event) => void` | -      | 스크롤 이벤트 콜백      |
-| `thumb`         | `ThumbConfig`            | `{}`   | 썸 관련 설정 객체       |
-| `track`         | `TrackConfig`            | `{}`   | 트랙 관련 설정 객체     |
-| `arrows`        | `ArrowsConfig`           | `{}`   | 화살표 관련 설정 객체   |
-| `dragScroll`    | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체 |
-| `autoHide`      | `AutoHideConfig`         | `{}`   | 자동 숨김 설정 객체     |
-| `showScrollbar` | `boolean`                | `true` | 스크롤바 표시 여부      |
+| 속성             | 타입                     | 기본값 | 설명                       |
+| ---------------- | ------------------------ | ------ | -------------------------- |
+| `children`       | `ReactNode`              | -      | 스크롤할 콘텐츠            |
+| `className`      | `string`                 | -      | 추가 CSS 클래스            |
+| `style`          | `React.CSSProperties`    | -      | 래퍼 div 스타일            |
+| `containerStyle` | `React.CSSProperties`    | -      | 스크롤 컨테이너 div 스타일 |
+| `contentStyle`   | `React.CSSProperties`    | -      | 내부 콘텐츠 div 스타일     |
+| `onScroll`       | `(event: Event) => void` | -      | 스크롤 이벤트 콜백         |
+| `thumb`          | `ThumbConfig`            | `{}`   | 썸 관련 설정 객체          |
+| `track`          | `TrackConfig`            | `{}`   | 트랙 관련 설정 객체        |
+| `arrows`         | `ArrowsConfig`           | `{}`   | 화살표 관련 설정 객체      |
+| `dragScroll`     | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체    |
+| `autoHide`       | `AutoHideConfig`         | `{}`   | 자동 숨김 설정 객체        |
+| `showScrollbar`  | `boolean`                | `true` | 스크롤바 표시 여부         |
 
 ### 설정 객체 속성
 

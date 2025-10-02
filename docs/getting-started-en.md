@@ -65,6 +65,9 @@ Starting from v1.3.0, related settings are grouped into objects for a cleaner AP
 
 ```tsx
 <OverlayScrollbar
+    style={{ height: "100%" }} // Wrapper div styles
+    containerStyle={{ padding: "10px" }} // Scroll container styles
+    contentStyle={{ display: "flex", flexDirection: "column" }} // Content div styles
     thumb={{
         width: 8,
         color: "#606060",
@@ -365,20 +368,51 @@ const MyComponent: React.FC = () => {
 
 ## API Reference
 
+### Style Properties
+
+The component provides three style props for different layers:
+
+```tsx
+<OverlayScrollbar
+    style={{ height: "100%" }} // Applied to wrapper div
+    containerStyle={{ padding: "10px" }} // Applied to scrollable container
+    contentStyle={{ display: "flex" }} // Applied to inner content
+>
+    {children}
+</OverlayScrollbar>
+```
+
+**DOM Structure:**
+
+```
+<div style={style}>                    ← Wrapper (position: relative)
+  <div style={containerStyle}>         ← Scroll container (overflow: auto)
+    <div style={contentStyle}>         ← Content wrapper
+      {children}
+    </div>
+  </div>
+  <div>                                ← Scrollbar track (position: absolute)
+    ...
+  </div>
+</div>
+```
+
 ### Props
 
-| Property        | Type                     | Default | Description                 |
-| --------------- | ------------------------ | ------- | --------------------------- |
-| `children`      | `ReactNode`              | -       | Content to scroll           |
-| `className`     | `string`                 | -       | Additional CSS class        |
-| `style`         | `React.CSSProperties`    | -       | Additional inline style     |
-| `onScroll`      | `(event: Event) => void` | -       | Scroll event callback       |
-| `thumb`         | `ThumbConfig`            | `{}`    | Thumb configuration object  |
-| `track`         | `TrackConfig`            | `{}`    | Track configuration object  |
-| `arrows`        | `ArrowsConfig`           | `{}`    | Arrows configuration object |
-| `dragScroll`    | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
-| `autoHide`      | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
-| `showScrollbar` | `boolean`                | `true`  | Show scrollbar              |
+| Property         | Type                     | Default | Description                 |
+| ---------------- | ------------------------ | ------- | --------------------------- |
+| `children`       | `ReactNode`              | -       | Content to scroll           |
+| `className`      | `string`                 | -       | Additional CSS class        |
+| `style`          | `React.CSSProperties`    | -       | Wrapper div styles          |
+| `containerStyle` | `React.CSSProperties`    | -       | Scroll container div styles |
+| `contentStyle`   | `React.CSSProperties`    | -       | Inner content div styles    |
+| `onScroll`       | `(event: Event) => void` | -       | Scroll event callback       |
+| `thumb`          | `ThumbConfig`            | `{}`    | Thumb configuration object  |
+| `track`          | `TrackConfig`            | `{}`    | Track configuration object  |
+| `arrows`         | `ArrowsConfig`           | `{}`    | Arrows configuration object |
+| `dragScroll`     | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
+| `autoHide`       | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
+| `showScrollbar`  | `boolean`                | `true`  | Show scrollbar              |
 
 ### Configuration Object Properties
 
