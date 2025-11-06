@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { DragScrollConfig } from "../OverlayScrollbar";
+import { DragScrollConfig } from "../types";
 
 // 드래그 스크롤을 제외할 클래스들 (자신 또는 부모 요소에서 확인)
 const DEFAULT_EXCLUDE_CLASSES = [

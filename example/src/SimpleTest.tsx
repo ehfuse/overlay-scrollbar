@@ -26,6 +26,20 @@ const SimpleTest = () => {
                             >
                                 테스트 아이템 {i + 1} - 이것은 스크롤 테스트를
                                 위한 내용입니다.
+                                {i % 5 === 0 && (
+                                    <div style={{ marginTop: "10px" }}>
+                                        <input
+                                            type="text"
+                                            placeholder={`입력 필드 ${i + 1}`}
+                                            style={{
+                                                width: "100%",
+                                                padding: "8px",
+                                                border: "1px solid #ddd",
+                                                borderRadius: "4px",
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

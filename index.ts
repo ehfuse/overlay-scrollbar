@@ -1,8 +1,11 @@
-export {
-    OverlayScrollbar as default,
-    OverlayScrollbar,
-} from "./src/OverlayScrollbar";
+export { default } from "./src/OverlayScrollbar";
+export { default as OverlayScrollbar } from "./src/OverlayScrollbar";
 export type {
     OverlayScrollbarRef,
     OverlayScrollbarProps,
-} from "./src/OverlayScrollbar";
+    ThumbConfig,
+    TrackConfig,
+    ArrowsConfig,
+    DragScrollConfig,
+    AutoHideConfig,
+} from "./src/types";
