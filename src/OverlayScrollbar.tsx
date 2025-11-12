@@ -212,6 +212,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 호버 진입 타이머 (디바운스용)
         const hoverEnterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+        // 휠 이벤트 표시 타이머 (디바운스용)
+        const wheelShowTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
         // 그룹화된 설정 객체들에 기본값 설정
         const finalThumbConfig = useMemo(() => {
             const baseColor = thumb.color ?? "#606060";
@@ -423,6 +426,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             if (hoverEnterTimeoutRef.current) {
                 clearTimeout(hoverEnterTimeoutRef.current);
                 hoverEnterTimeoutRef.current = null;
+            }
+        }, []);
+
+        const clearWheelShowTimer = useCallback(() => {
+            if (wheelShowTimeoutRef.current) {
+                clearTimeout(wheelShowTimeoutRef.current);
+                wheelShowTimeoutRef.current = null;
             }
         }, []);
 
@@ -731,9 +741,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     scrollLeft: scrollableElement.scrollLeft || 0,
                 });
 
-                // 스크롤바 표시
+                // 스크롤바는 실제 드래그가 발생할 때 표시 (handleDragScrollMove에서 처리)
                 clearHideTimer();
-                setScrollbarVisible(true);
             },
             [
                 finalDragScrollConfig,
@@ -753,6 +762,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 const deltaX = dragScrollStart.x - event.clientX;
                 const deltaY = dragScrollStart.y - event.clientY;
+
+                // 미세한 움직임 무시 (3px 이하)
+                if (Math.abs(deltaY) < 3 && Math.abs(deltaX) < 3) {
+                    return;
+                }
+
+                // 실제 드래그가 발생했으므로 스크롤바 표시
+                setScrollbarVisible(true);
 
                 // 세로 스크롤만 처리 (가로 스크롤은 필요시 나중에 추가)
                 const newScrollTop = Math.max(
@@ -818,7 +835,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 }, 300);
 
                 clearHideTimer();
-                setScrollbarVisible(true);
+
+                // 휠 이벤트 시 50ms 디바운스 적용 (미세한 휠 움직임 무시)
+                clearWheelShowTimer();
+                wheelShowTimeoutRef.current = setTimeout(() => {
+                    setScrollbarVisible(true);
+                    wheelShowTimeoutRef.current = null;
+                }, 50);
             };
 
             const elementsToWatch: HTMLElement[] = [];
@@ -888,6 +911,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 if (wheelTimeoutRef.current) {
                     clearTimeout(wheelTimeoutRef.current);
+                }
+                if (wheelShowTimeoutRef.current) {
+                    clearTimeout(wheelShowTimeoutRef.current);
                 }
             };
         }, [
