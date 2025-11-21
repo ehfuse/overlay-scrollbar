@@ -809,6 +809,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 clearHideTimer();
                 setScrollbarVisible(true);
 
+                // 휠 이벤트 디바운스 타이머 취소 (실제 스크롤 발생 시)
+                clearWheelShowTimer();
+
                 // 휠 스크롤 중이면 빠른 숨김, 아니면 기본 숨김 시간 적용
                 const delay = isWheelScrolling
                     ? finalAutoHideConfig.delayOnWheel
@@ -834,13 +837,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     setIsWheelScrolling(false);
                 }, 300);
 
-                clearHideTimer();
-
-                // 휠 이벤트 시 50ms 디바운스 적용 (미세한 휠 움직임 무시)
+                // 휠 이벤트 시 50ms 디바운스 적용 (실제 스크롤 발생 시 handleScroll에서 취소됨)
                 clearWheelShowTimer();
                 wheelShowTimeoutRef.current = setTimeout(() => {
                     setScrollbarVisible(true);
                     wheelShowTimeoutRef.current = null;
+                    // 스크롤바 표시 후 자동 숨김 타이머 설정
+                    setHideTimer(finalAutoHideConfig.delayOnWheel);
                 }, 50);
             };
 
