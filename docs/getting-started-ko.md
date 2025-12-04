@@ -457,11 +457,12 @@ const MyComponent: React.FC = () => {
 
 #### AutoHideConfig
 
-| 속성           | 타입      | 기본값 | 설명                      |
-| -------------- | --------- | ------ | ------------------------- |
-| `enabled`      | `boolean` | `true` | 자동 숨김 활성화 여부     |
-| `delay`        | `number`  | `1500` | 자동 숨김 지연 시간 (ms)  |
-| `delayOnWheel` | `number`  | `700`  | 휠 후 숨김 지연 시간 (ms) |
+| 속성           | 타입      | 기본값 | 설명                                   |
+| -------------- | --------- | ------ | -------------------------------------- |
+| `enabled`      | `boolean` | `true` | 자동 숨김 활성화 여부                  |
+| `delay`        | `number`  | `1500` | 자동 숨김 지연 시간 (ms)               |
+| `delayOnWheel` | `number`  | `700`  | 휠 후 숨김 지연 시간 (ms)              |
+| `initialDelay` | `number`  | `200`  | 마운트 후 스크롤바 표시 지연 시간 (ms) |
 
 ### 주요 인터페이스
 
@@ -521,6 +522,7 @@ interface AutoHideConfig {
     enabled?: boolean; // 기본가: true
     delay?: number; // 기본가: 1500ms
     delayOnWheel?: number; // 기본가: 700ms
+    initialDelay?: number; // 기본값: 200ms (마운트 후 스크롤바 표시 지연)
 }
 ```
 

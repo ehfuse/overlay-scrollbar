@@ -100,6 +100,7 @@ interface AutoHideConfig {
     enabled?: boolean; // Enable auto-hide (default: true)
     delay?: number; // Auto-hide delay (default: 1500ms)
     delayOnWheel?: number; // Quick hide after wheel (default: 700ms)
+    initialDelay?: number; // Delay before showing scrollbar on mount (default: 200ms)
 }
 ```
 

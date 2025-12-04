@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import OverlayScrollbar from "@/OverlayScrollbar";
+import type { OverlayScrollbarRef } from "@/types";
 
 const SimpleTest = () => {
+    const scrollbarRef = useRef<OverlayScrollbarRef>(null);
+
+    useEffect(() => {
+        // 마운트 시 100px 아래로 스크롤
+        if (scrollbarRef.current) {
+            scrollbarRef.current.scrollTo({ top: 100 });
+        }
+    }, []);
+
     return (
         <div>
             <h3>Simple OverlayScrollbar Test</h3>
@@ -13,7 +23,7 @@ const SimpleTest = () => {
                     margin: "20px",
                 }}
             >
-                <OverlayScrollbar>
+                <OverlayScrollbar ref={scrollbarRef}>
                     <div style={{ padding: "20px" }}>
                         {Array.from({ length: 50 }, (_, i) => (
                             <div

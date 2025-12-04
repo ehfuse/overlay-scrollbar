@@ -49,6 +49,7 @@ export interface AutoHideConfig {
     enabled?: boolean; // 자동 숨김 활성화 여부 (기본값: true)
     delay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
     delayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본값: 700ms)
+    initialDelay?: number; // 마운트 후 스크롤바 표시 지연 시간 (기본값: 200ms, 0보다 크면 초기 스크롤 시 스크롤바 숨김)
 }
 
 export interface OverlayScrollbarProps {

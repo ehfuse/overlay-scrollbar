@@ -9,7 +9,7 @@ execSync("tsc --emitDeclarationOnly --declaration --declarationDir dist", {
 
 // ESM 빌드 (minified)
 await esbuild.build({
-    entryPoints: ["index.ts"],
+    entryPoints: ["src/index.ts"],
     bundle: true,
     minify: true,
     sourcemap: true,
@@ -22,7 +22,7 @@ await esbuild.build({
 
 // CommonJS 빌드 (minified)
 await esbuild.build({
-    entryPoints: ["index.ts"],
+    entryPoints: ["src/index.ts"],
     bundle: true,
     minify: true,
     sourcemap: true,

@@ -78,7 +78,7 @@ export interface AutoHideConfig {
     enabled?: boolean; // 자동 숨김 활성화 여부 (기본값: true)
     delay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
     delayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본가: 700ms)
-    initialDelay?: number; // 마운트 후 스크롤바 표시 지연 시간 (기본값: 0, 0보다 크면 초기 스크롤 시 스크롤바 숨김)
+    initialDelay?: number; // 마운트 후 스크롤바 표시 지연 시간 (기본값: 200ms, 0보다 크면 초기 스크롤 시 스크롤바 숨김)
 }
 
 export interface OverlayScrollbarProps {
@@ -268,14 +268,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 enabled: autoHide.enabled ?? true,
                 delay: autoHide.delay ?? 1500,
                 delayOnWheel: autoHide.delayOnWheel ?? 700,
-                initialDelay: autoHide.initialDelay ?? 0,
+                initialDelay: autoHide.initialDelay ?? 200,
             }),
             [autoHide]
         );
 
         // 초기 마운트 시 스크롤바 표시 지연 상태
         const [isInitialDelayActive, setIsInitialDelayActive] = useState(
-            () => (autoHide.initialDelay ?? 0) > 0
+            () => (autoHide.initialDelay ?? 200) > 0
         );
 
         // 호환성을 위한 변수들 (자주 사용되는 변수들만 유지)
@@ -475,8 +475,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             if (!scrollbarRef.current) return;
 
-            // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
-            if (!finalAutoHideConfig.enabled) {
+            // 자동 숨김이 비활성화되어 있고 초기 지연이 끝났으면 스크롤바를 항상 표시
+            if (!finalAutoHideConfig.enabled && !isInitialDelayActive) {
                 setScrollbarVisible(true);
                 clearHideTimer();
             }
@@ -529,6 +529,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             finalThumbWidth,
             thumbMinHeight,
             finalAutoHideConfig.enabled,
+            isInitialDelayActive,
         ]);
 
         // 썸 드래그 시작
@@ -1082,11 +1083,20 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             setIsInitialized(true);
             // 초기화 직후 스크롤바 업데이트 (썸 높이 정확하게 계산)
             updateScrollbar();
-            // 자동 숨김이 비활성화되어 있으면 스크롤바를 항상 표시
-            if (!finalAutoHideConfig.enabled && isScrollable()) {
+            // 자동 숨김이 비활성화되어 있고 초기 지연이 끝났으면 스크롤바를 항상 표시
+            if (
+                !finalAutoHideConfig.enabled &&
+                !isInitialDelayActive &&
+                isScrollable()
+            ) {
                 setScrollbarVisible(true);
             }
-        }, [isScrollable, updateScrollbar, finalAutoHideConfig.enabled]);
+        }, [
+            isScrollable,
+            updateScrollbar,
+            finalAutoHideConfig.enabled,
+            isInitialDelayActive,
+        ]);
 
         // 초기 마운트 지연 타이머
         useEffect(() => {
