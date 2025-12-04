@@ -78,6 +78,7 @@ export interface AutoHideConfig {
     enabled?: boolean; // 자동 숨김 활성화 여부 (기본값: true)
     delay?: number; // 기본 자동 숨김 시간 (기본값: 1500ms)
     delayOnWheel?: number; // 휠 스크롤 후 자동 숨김 시간 (기본가: 700ms)
+    initialDelay?: number; // 마운트 후 스크롤바 표시 지연 시간 (기본값: 0, 0보다 크면 초기 스크롤 시 스크롤바 숨김)
 }
 
 export interface OverlayScrollbarProps {
@@ -267,8 +268,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 enabled: autoHide.enabled ?? true,
                 delay: autoHide.delay ?? 1500,
                 delayOnWheel: autoHide.delayOnWheel ?? 700,
+                initialDelay: autoHide.initialDelay ?? 0,
             }),
             [autoHide]
+        );
+
+        // 초기 마운트 시 스크롤바 표시 지연 상태
+        const [isInitialDelayActive, setIsInitialDelayActive] = useState(
+            () => (autoHide.initialDelay ?? 0) > 0
         );
 
         // 호환성을 위한 변수들 (자주 사용되는 변수들만 유지)
@@ -805,6 +812,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const handleScroll = (event: Event) => {
                 updateScrollbar();
 
+                // 초기 지연 중에는 스크롤바 표시하지 않음
+                if (isInitialDelayActive) {
+                    if (onScroll) {
+                        onScroll(event);
+                    }
+                    return;
+                }
+
                 // 스크롤 중에는 스크롤바 표시
                 clearHideTimer();
                 setScrollbarVisible(true);
@@ -927,6 +942,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             setHideTimer,
             finalAutoHideConfig,
             isWheelScrolling,
+            isInitialDelayActive,
         ]);
 
         // 키보드 네비게이션 핸들러 (방향키, PageUp/PageDown/Home/End)
@@ -1071,6 +1087,16 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setScrollbarVisible(true);
             }
         }, [isScrollable, updateScrollbar, finalAutoHideConfig.enabled]);
+
+        // 초기 마운트 지연 타이머
+        useEffect(() => {
+            if (finalAutoHideConfig.initialDelay > 0) {
+                const timer = setTimeout(() => {
+                    setIsInitialDelayActive(false);
+                }, finalAutoHideConfig.initialDelay);
+                return () => clearTimeout(timer);
+            }
+        }, [finalAutoHideConfig.initialDelay]);
 
         // Resize observer로 크기 변경 감지
         useEffect(() => {
