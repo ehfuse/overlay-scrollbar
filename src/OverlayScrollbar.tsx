@@ -1189,6 +1189,18 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 .overlay-scrollbar-container::-webkit-scrollbar-thumb {
                     display: none !important;
                 }
+                /* ehfuse-editor 내의 ehfuse-editor-content는 스크롤바 유지 */
+                .ehfuse-editor .ehfuse-editor-content::-webkit-scrollbar {
+                    display: initial !important;
+                    width: initial !important;
+                    height: initial !important;
+                }
+                .ehfuse-editor .ehfuse-editor-content::-webkit-scrollbar-track {
+                    display: initial !important;
+                }
+                .ehfuse-editor .ehfuse-editor-content::-webkit-scrollbar-thumb {
+                    display: initial !important;
+                }
                 .overlay-scrollbar-container:focus {
                     outline: 2px solid rgba(0, 123, 255, 0.3);
                     outline-offset: -2px;

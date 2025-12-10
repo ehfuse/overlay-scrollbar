@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import OverlayScrollbar from "@/OverlayScrollbar";
-import SimpleTest from "./SimpleTest";
-import DialogTest from "./DialogTest";
-import NestedTest from "./NestedTest";
+import SimpleTest from "./pages/SimpleTest";
+import DialogTest from "./pages/DialogTest";
+import NestedTest from "./pages/NestedTest";
 import "./App.css";
 
 // Original Test 컴포넌트 분리
