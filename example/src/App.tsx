@@ -4,6 +4,7 @@ import OverlayScrollbar from "@/OverlayScrollbar";
 import SimpleTest from "./pages/SimpleTest";
 import DialogTest from "./pages/DialogTest";
 import NestedTest from "./pages/NestedTest";
+import EditorTest from "./pages/EditorTest";
 import "./App.css";
 
 // Original Test 컴포넌트 분리
@@ -810,6 +811,9 @@ function App() {
                     <Link to="/nested" style={navStyle("/nested")}>
                         Nested Test
                     </Link>
+                    <Link to="/editor" style={navStyle("/editor")}>
+                        Editor Test
+                    </Link>
                 </div>
             </header>
 
@@ -819,6 +823,7 @@ function App() {
                     <Route path="/simple" element={<SimpleTest />} />
                     <Route path="/dialog" element={<DialogTest />} />
                     <Route path="/nested" element={<NestedTest />} />
+                    <Route path="/editor" element={<EditorTest />} />
                 </Routes>
             </div>
         </div>

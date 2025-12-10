@@ -1190,21 +1190,26 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     display: none !important;
                 }
                 /* ehfuse-editor-content는 스크롤바 유지 */
-                .ehfuse-editor-content,
-                .ehfuse-editor-content * {
-                    scrollbar-width: auto !important;
+                .overlay-scrollbar-container .ehfuse-editor-content {
+                    scrollbar-width: thin !important;
                     -ms-overflow-style: auto !important;
                 }
-                .ehfuse-editor-content::-webkit-scrollbar {
+                .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar {
                     display: block !important;
-                    width: initial !important;
-                    height: initial !important;
+                    width: 8px !important;
+                    height: 8px !important;
                 }
-                .ehfuse-editor-content::-webkit-scrollbar-track {
+                .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar-track {
                     display: block !important;
+                    background: #f1f1f1 !important;
                 }
-                .ehfuse-editor-content::-webkit-scrollbar-thumb {
+                .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar-thumb {
                     display: block !important;
+                    background: #c1c1c1 !important;
+                    border-radius: 4px !important;
+                }
+                .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar-thumb:hover {
+                    background: #a1a1a1 !important;
                 }
                 .overlay-scrollbar-container:focus {
                     outline: 2px solid rgba(0, 123, 255, 0.3);
