@@ -1178,16 +1178,33 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const style = document.createElement("style");
             style.id = styleId;
             style.textContent = `
-                .overlay-scrollbar-container:not(.ehfuse-editor-content)::-webkit-scrollbar {
+                .overlay-scrollbar-container::-webkit-scrollbar {
                     display: none !important;
                     width: 0 !important;
                     height: 0 !important;
                 }
-                .overlay-scrollbar-container:not(.ehfuse-editor-content)::-webkit-scrollbar-track {
+                .overlay-scrollbar-container::-webkit-scrollbar-track {
                     display: none !important;
                 }
-                .overlay-scrollbar-container:not(.ehfuse-editor-content)::-webkit-scrollbar-thumb {
+                .overlay-scrollbar-container::-webkit-scrollbar-thumb {
                     display: none !important;
+                }
+                /* ehfuse-editor-content는 스크롤바 유지 */
+                .ehfuse-editor-content,
+                .ehfuse-editor-content * {
+                    scrollbar-width: auto !important;
+                    -ms-overflow-style: auto !important;
+                }
+                .ehfuse-editor-content::-webkit-scrollbar {
+                    display: block !important;
+                    width: initial !important;
+                    height: initial !important;
+                }
+                .ehfuse-editor-content::-webkit-scrollbar-track {
+                    display: block !important;
+                }
+                .ehfuse-editor-content::-webkit-scrollbar-thumb {
+                    display: block !important;
                 }
                 .overlay-scrollbar-container:focus {
                     outline: 2px solid rgba(0, 123, 255, 0.3);
