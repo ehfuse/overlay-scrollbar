@@ -54,6 +54,8 @@ export interface TrackConfig {
     alignment?: "center" | "outside"; // 트랙 정렬 (기본값: "center", "outside"는 오른쪽/아래 끝에 붙음)
     radius?: number; // 트랙 배경의 border-radius (기본값: thumb.radius 또는 4px)
     margin?: number; // 트랙 상하 마진 (기본값: 4px)
+    overflowX?: boolean; // 가로 스크롤바 활성화 여부 (기본값: true)
+    overflowY?: boolean; // 세로 스크롤바 활성화 여부 (기본값: true)
 }
 
 // arrows 관련 설정
@@ -256,6 +258,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 alignment: track.alignment ?? "center",
                 radius: track.radius ?? finalThumbConfig.radius ?? 4,
                 margin: track.margin ?? 4,
+                overflowX: track.overflowX ?? true,
+                overflowY: track.overflowY ?? true,
             }),
             [track, finalThumbConfig.radius]
         );
@@ -1485,126 +1489,133 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 </div>
 
                 {/* 커스텀 스크롤바 */}
-                {showScrollbar && hasScrollableContent && (
-                    <div
-                        ref={scrollbarRef}
-                        className="overlay-scrollbar-track"
-                        onMouseEnter={() => {
-                            // 숨김 타이머는 즉시 취소
-                            clearHideTimer();
+                {showScrollbar &&
+                    hasScrollableContent &&
+                    (finalTrackConfig.overflowY ?? true) && (
+                        <div
+                            ref={scrollbarRef}
+                            className="overlay-scrollbar-track"
+                            onMouseEnter={() => {
+                                // 숨김 타이머는 즉시 취소
+                                clearHideTimer();
 
-                            // 호버 진입 타이머 설정 (100ms 후 표시)
-                            hoverEnterTimeoutRef.current = setTimeout(() => {
-                                setScrollbarVisible(true);
-                                hoverEnterTimeoutRef.current = null;
-                            }, 100);
-                        }}
-                        onMouseLeave={() => {
-                            // 호버 진입 타이머 취소 (지나가기만 한 경우)
-                            clearHoverEnterTimer();
+                                // 호버 진입 타이머 설정 (100ms 후 표시)
+                                hoverEnterTimeoutRef.current = setTimeout(
+                                    () => {
+                                        setScrollbarVisible(true);
+                                        hoverEnterTimeoutRef.current = null;
+                                    },
+                                    100
+                                );
+                            }}
+                            onMouseLeave={() => {
+                                // 호버 진입 타이머 취소 (지나가기만 한 경우)
+                                clearHoverEnterTimer();
 
-                            if (!isDragging) {
-                                setHideTimer(finalAutoHideConfig.delay);
-                            }
-                        }}
-                        style={{
-                            position: "absolute",
-                            top: 0,
-                            right: 0,
-                            width: `${adjustedTrackWidth}px`,
-                            height: "100%",
-                            opacity: scrollbarVisible ? 1 : 0,
-                            transition: "opacity 0.2s ease-in-out",
-                            cursor: "pointer",
-                            zIndex: 1000,
-                            pointerEvents: "auto",
-                        }}
-                    >
-                        {/* 스크롤바 트랙 배경 */}
-                        {finalTrackConfig.visible && (
+                                if (!isDragging) {
+                                    setHideTimer(finalAutoHideConfig.delay);
+                                }
+                            }}
+                            style={{
+                                position: "absolute",
+                                top: 0,
+                                right: 0,
+                                width: `${adjustedTrackWidth}px`,
+                                height: "100%",
+                                opacity: scrollbarVisible ? 1 : 0,
+                                transition: "opacity 0.2s ease-in-out",
+                                cursor: "pointer",
+                                zIndex: 1000,
+                                pointerEvents: "auto",
+                            }}
+                        >
+                            {/* 스크롤바 트랙 배경 */}
+                            {finalTrackConfig.visible && (
+                                <div
+                                    className="overlay-scrollbar-track-background"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleTrackClick(e);
+                                    }}
+                                    style={{
+                                        position: "absolute",
+                                        top: showArrows
+                                            ? `${
+                                                  finalThumbConfig.width +
+                                                  finalTrackConfig.margin * 2
+                                              }px`
+                                            : `${finalTrackConfig.margin}px`,
+                                        right:
+                                            finalTrackConfig.alignment ===
+                                            "outside"
+                                                ? "0px"
+                                                : `${
+                                                      (adjustedTrackWidth -
+                                                          finalThumbConfig.width) /
+                                                      2
+                                                  }px`, // 트랙 정렬
+                                        width: `${finalThumbConfig.width}px`,
+                                        height: showArrows
+                                            ? `calc(100% - ${
+                                                  finalThumbConfig.width * 2 +
+                                                  finalTrackConfig.margin * 4
+                                              }px)`
+                                            : `calc(100% - ${
+                                                  finalTrackConfig.margin * 2
+                                              }px)`,
+                                        backgroundColor: finalTrackConfig.color,
+                                        borderRadius: `${finalTrackConfig.radius}px`,
+                                        cursor: "pointer",
+                                    }}
+                                />
+                            )}
+
+                            {/* 스크롤바 썸 */}
                             <div
-                                className="overlay-scrollbar-track-background"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleTrackClick(e);
-                                }}
+                                ref={thumbRef}
+                                className="overlay-scrollbar-thumb"
+                                onMouseDown={handleThumbMouseDown}
+                                onMouseEnter={() => setIsThumbHovered(true)}
+                                onMouseLeave={() => setIsThumbHovered(false)}
                                 style={{
                                     position: "absolute",
-                                    top: showArrows
-                                        ? `${
-                                              finalThumbConfig.width +
+                                    top: `${
+                                        (showArrows
+                                            ? finalThumbWidth +
                                               finalTrackConfig.margin * 2
-                                          }px`
-                                        : `${finalTrackConfig.margin}px`,
+                                            : finalTrackConfig.margin) +
+                                        thumbTop
+                                    }px`,
                                     right:
                                         finalTrackConfig.alignment === "outside"
                                             ? "0px"
                                             : `${
                                                   (adjustedTrackWidth -
-                                                      finalThumbConfig.width) /
+                                                      finalThumbWidth) /
                                                   2
                                               }px`, // 트랙 정렬
-                                    width: `${finalThumbConfig.width}px`,
-                                    height: showArrows
-                                        ? `calc(100% - ${
-                                              finalThumbConfig.width * 2 +
-                                              finalTrackConfig.margin * 4
-                                          }px)`
-                                        : `calc(100% - ${
-                                              finalTrackConfig.margin * 2
-                                          }px)`,
-                                    backgroundColor: finalTrackConfig.color,
-                                    borderRadius: `${finalTrackConfig.radius}px`,
+                                    width: `${finalThumbWidth}px`,
+                                    height: `${Math.max(
+                                        thumbHeight,
+                                        thumbMinHeight
+                                    )}px`,
+                                    backgroundColor:
+                                        isThumbHovered || isDragging
+                                            ? finalThumbConfig.hoverColor
+                                            : finalThumbConfig.color,
+                                    opacity:
+                                        isThumbHovered || isDragging
+                                            ? finalThumbConfig.hoverOpacity
+                                            : finalThumbConfig.opacity,
+                                    borderRadius: `${finalThumbConfig.radius}px`,
                                     cursor: "pointer",
+                                    transition:
+                                        "background-color 0.2s ease-in-out, opacity 0.2s ease-in-out",
                                 }}
                             />
-                        )}
-
-                        {/* 스크롤바 썸 */}
-                        <div
-                            ref={thumbRef}
-                            className="overlay-scrollbar-thumb"
-                            onMouseDown={handleThumbMouseDown}
-                            onMouseEnter={() => setIsThumbHovered(true)}
-                            onMouseLeave={() => setIsThumbHovered(false)}
-                            style={{
-                                position: "absolute",
-                                top: `${
-                                    (showArrows
-                                        ? finalThumbWidth +
-                                          finalTrackConfig.margin * 2
-                                        : finalTrackConfig.margin) + thumbTop
-                                }px`,
-                                right:
-                                    finalTrackConfig.alignment === "outside"
-                                        ? "0px"
-                                        : `${
-                                              (adjustedTrackWidth -
-                                                  finalThumbWidth) /
-                                              2
-                                          }px`, // 트랙 정렬
-                                width: `${finalThumbWidth}px`,
-                                height: `${Math.max(
-                                    thumbHeight,
-                                    thumbMinHeight
-                                )}px`,
-                                backgroundColor:
-                                    isThumbHovered || isDragging
-                                        ? finalThumbConfig.hoverColor
-                                        : finalThumbConfig.color,
-                                opacity:
-                                    isThumbHovered || isDragging
-                                        ? finalThumbConfig.hoverOpacity
-                                        : finalThumbConfig.opacity,
-                                borderRadius: `${finalThumbConfig.radius}px`,
-                                cursor: "pointer",
-                                transition:
-                                    "background-color 0.2s ease-in-out, opacity 0.2s ease-in-out",
-                            }}
-                        />
-                    </div>
-                )}
+                        </div>
+                    )}
 
                 {/* 위쪽 화살표 버튼 */}
                 {showScrollbar && hasScrollableContent && showArrows && (
@@ -1701,53 +1712,91 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 )}
 
                 {/* 가로 커스텀 스크롤바 */}
-                {showScrollbar && hasHorizontalScrollableContent && (
-                    <div
-                        className="overlay-scrollbar-horizontal-track"
-                        onMouseEnter={() => {
-                            // 숨김 타이머는 즉시 취소
-                            clearHideTimer();
+                {showScrollbar &&
+                    hasHorizontalScrollableContent &&
+                    (finalTrackConfig.overflowX ?? true) && (
+                        <div
+                            className="overlay-scrollbar-horizontal-track"
+                            onMouseEnter={() => {
+                                // 숨김 타이머는 즉시 취소
+                                clearHideTimer();
 
-                            // 호버 진입 타이머 설정 (100ms 후 표시)
-                            hoverEnterTimeoutRef.current = setTimeout(() => {
-                                setScrollbarVisible(true);
-                                hoverEnterTimeoutRef.current = null;
-                            }, 100);
-                        }}
-                        onMouseLeave={() => {
-                            // 호버 진입 타이머 취소 (지나가기만 한 경우)
-                            clearHoverEnterTimer();
+                                // 호버 진입 타이머 설정 (100ms 후 표시)
+                                hoverEnterTimeoutRef.current = setTimeout(
+                                    () => {
+                                        setScrollbarVisible(true);
+                                        hoverEnterTimeoutRef.current = null;
+                                    },
+                                    100
+                                );
+                            }}
+                            onMouseLeave={() => {
+                                // 호버 진입 타이머 취소 (지나가기만 한 경우)
+                                clearHoverEnterTimer();
 
-                            if (!isDraggingHorizontal) {
-                                setHideTimer(finalAutoHideConfig.delay);
-                            }
-                        }}
-                        style={{
-                            position: "absolute",
-                            bottom: `${wrapperPaddingBottom}px`,
-                            left: 0,
-                            width: "100%",
-                            height: `${adjustedTrackWidth}px`,
-                            opacity: scrollbarVisible ? 1 : 0,
-                            transition: "opacity 0.2s ease-in-out",
-                            cursor: "pointer",
-                            zIndex: 1000,
-                            pointerEvents: "auto",
-                        }}
-                    >
-                        {/* 가로 스크롤바 트랙 배경 */}
-                        {finalTrackConfig.visible && (
+                                if (!isDraggingHorizontal) {
+                                    setHideTimer(finalAutoHideConfig.delay);
+                                }
+                            }}
+                            style={{
+                                position: "absolute",
+                                bottom: `${wrapperPaddingBottom}px`,
+                                left: 0,
+                                width: "100%",
+                                height: `${adjustedTrackWidth}px`,
+                                opacity: scrollbarVisible ? 1 : 0,
+                                transition: "opacity 0.2s ease-in-out",
+                                cursor: "pointer",
+                                zIndex: 1000,
+                                pointerEvents: "auto",
+                            }}
+                        >
+                            {/* 가로 스크롤바 트랙 배경 */}
+                            {finalTrackConfig.visible && (
+                                <div
+                                    className="overlay-scrollbar-horizontal-track-background"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleHorizontalTrackClick(e);
+                                    }}
+                                    style={{
+                                        position: "absolute",
+                                        bottom: 0,
+                                        left: `${finalTrackConfig.margin}px`,
+                                        right:
+                                            finalTrackConfig.alignment ===
+                                                "outside" &&
+                                            hasScrollableContent
+                                                ? `${
+                                                      adjustedTrackWidth -
+                                                      finalTrackConfig.margin
+                                                  }px`
+                                                : `${finalTrackConfig.margin}px`,
+                                        height: `${finalThumbWidth}px`,
+                                        backgroundColor: finalTrackConfig.color,
+                                        borderRadius: `${finalTrackConfig.radius}px`,
+                                        cursor: "pointer",
+                                    }}
+                                />
+                            )}
+
+                            {/* 가로 스크롤바 썸 */}
                             <div
-                                className="overlay-scrollbar-horizontal-track-background"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleHorizontalTrackClick(e);
-                                }}
+                                className="overlay-scrollbar-horizontal-thumb"
+                                onMouseDown={handleHorizontalThumbMouseDown}
+                                onMouseEnter={() =>
+                                    setIsHorizontalThumbHovered(true)
+                                }
+                                onMouseLeave={() =>
+                                    setIsHorizontalThumbHovered(false)
+                                }
                                 style={{
                                     position: "absolute",
                                     bottom: 0,
-                                    left: `${finalTrackConfig.margin}px`,
+                                    left: `${
+                                        finalTrackConfig.margin + thumbLeft
+                                    }px`,
                                     right:
                                         finalTrackConfig.alignment ===
                                             "outside" && hasScrollableContent
@@ -1755,69 +1804,37 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                                   adjustedTrackWidth -
                                                   finalTrackConfig.margin
                                               }px`
-                                            : `${finalTrackConfig.margin}px`,
+                                            : "auto",
+                                    maxWidth:
+                                        finalTrackConfig.alignment ===
+                                            "outside" && hasScrollableContent
+                                            ? `calc(100% - ${
+                                                  finalTrackConfig.margin +
+                                                  thumbLeft +
+                                                  adjustedTrackWidth -
+                                                  finalTrackConfig.margin
+                                              }px)`
+                                            : "none",
+                                    width: `${Math.max(thumbWidth, 50)}px`,
                                     height: `${finalThumbWidth}px`,
-                                    backgroundColor: finalTrackConfig.color,
-                                    borderRadius: `${finalTrackConfig.radius}px`,
+                                    backgroundColor:
+                                        isHorizontalThumbHovered ||
+                                        isDraggingHorizontal
+                                            ? finalThumbConfig.hoverColor
+                                            : finalThumbConfig.color,
+                                    opacity:
+                                        isHorizontalThumbHovered ||
+                                        isDraggingHorizontal
+                                            ? finalThumbConfig.hoverOpacity
+                                            : finalThumbConfig.opacity,
+                                    borderRadius: `${finalThumbConfig.radius}px`,
                                     cursor: "pointer",
+                                    transition:
+                                        "background-color 0.2s ease-in-out, opacity 0.2s ease-in-out",
                                 }}
                             />
-                        )}
-
-                        {/* 가로 스크롤바 썸 */}
-                        <div
-                            className="overlay-scrollbar-horizontal-thumb"
-                            onMouseDown={handleHorizontalThumbMouseDown}
-                            onMouseEnter={() =>
-                                setIsHorizontalThumbHovered(true)
-                            }
-                            onMouseLeave={() =>
-                                setIsHorizontalThumbHovered(false)
-                            }
-                            style={{
-                                position: "absolute",
-                                bottom: 0,
-                                left: `${
-                                    finalTrackConfig.margin + thumbLeft
-                                }px`,
-                                right:
-                                    finalTrackConfig.alignment === "outside" &&
-                                    hasScrollableContent
-                                        ? `${
-                                              adjustedTrackWidth -
-                                              finalTrackConfig.margin
-                                          }px`
-                                        : "auto",
-                                maxWidth:
-                                    finalTrackConfig.alignment === "outside" &&
-                                    hasScrollableContent
-                                        ? `calc(100% - ${
-                                              finalTrackConfig.margin +
-                                              thumbLeft +
-                                              adjustedTrackWidth -
-                                              finalTrackConfig.margin
-                                          }px)`
-                                        : "none",
-                                width: `${Math.max(thumbWidth, 50)}px`,
-                                height: `${finalThumbWidth}px`,
-                                backgroundColor:
-                                    isHorizontalThumbHovered ||
-                                    isDraggingHorizontal
-                                        ? finalThumbConfig.hoverColor
-                                        : finalThumbConfig.color,
-                                opacity:
-                                    isHorizontalThumbHovered ||
-                                    isDraggingHorizontal
-                                        ? finalThumbConfig.hoverOpacity
-                                        : finalThumbConfig.opacity,
-                                borderRadius: `${finalThumbConfig.radius}px`,
-                                cursor: "pointer",
-                                transition:
-                                    "background-color 0.2s ease-in-out, opacity 0.2s ease-in-out",
-                            }}
-                        />
-                    </div>
-                )}
+                        </div>
+                    )}
             </div>
         );
     }

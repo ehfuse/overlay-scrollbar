@@ -25,6 +25,8 @@ export interface TrackConfig {
     alignment?: "center" | "outside"; // 트랙 정렬 (기본값: "center", "outside"는 오른쪽/아래 끝에 붙음)
     radius?: number; // 트랙 배경의 border-radius (기본값: thumb.radius 또는 4px)
     margin?: number; // 트랙 상하 마진 (기본값: 4px)
+    overflowX?: boolean; // 가로 스크롤바 활성화 여부 (기본값: true)
+    overflowY?: boolean; // 세로 스크롤바 활성화 여부 (기본값: true)
 }
 
 // arrows 관련 설정
