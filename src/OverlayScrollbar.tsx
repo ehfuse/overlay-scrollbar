@@ -185,6 +185,21 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const [thumbTop, setThumbTop] = useState(0);
         const [hasScrollableContent, setHasScrollableContent] = useState(false);
 
+        // 가로 스크롤바 상태
+        const [isHorizontalThumbHovered, setIsHorizontalThumbHovered] =
+            useState(false);
+        const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
+        const [dragStartHorizontal, setDragStartHorizontal] = useState({
+            x: 0,
+            scrollLeft: 0,
+        });
+        const [thumbWidth, setThumbWidth] = useState(0);
+        const [thumbLeft, setThumbLeft] = useState(0);
+        const [
+            hasHorizontalScrollableContent,
+            setHasHorizontalScrollableContent,
+        ] = useState(false);
+
         // 드래그 스크롤 상태
         const [isDragScrolling, setIsDragScrolling] = useState(false);
         const [dragScrollStart, setDragScrollStart] = useState({
@@ -466,6 +481,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // 스크롤 불가능하면 숨김
                 setScrollbarVisible(false);
                 setHasScrollableContent(false);
+                setHasHorizontalScrollableContent(false);
                 clearHideTimer();
                 return;
             }
@@ -484,6 +500,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const containerHeight = scrollableElement.clientHeight;
             const contentHeight = scrollableElement.scrollHeight;
             const scrollTop = scrollableElement.scrollTop;
+
+            const containerWidth = scrollableElement.clientWidth;
+            const contentWidth = scrollableElement.scrollWidth;
+            const scrollLeft = scrollableElement.scrollLeft;
 
             // wrapper의 패딩 계산 (상하 패딩만 필요)
             let wrapperPaddingTopBottom = 0;
@@ -522,6 +542,31 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             setThumbHeight(calculatedThumbHeight);
             setThumbTop(calculatedThumbTop);
+
+            // 가로 스크롤바 계산
+            const horizontalScrollableWidth = contentWidth - containerWidth;
+            if (horizontalScrollableWidth > 0) {
+                setHasHorizontalScrollableContent(true);
+
+                const scrollRatioHorizontal = containerWidth / contentWidth;
+                const calculatedThumbWidth = Math.max(
+                    containerWidth * scrollRatioHorizontal,
+                    50 // 최소 너비
+                );
+
+                const thumbScrollableWidth =
+                    containerWidth - calculatedThumbWidth;
+                const calculatedThumbLeft =
+                    horizontalScrollableWidth > 0
+                        ? (scrollLeft / horizontalScrollableWidth) *
+                          thumbScrollableWidth
+                        : 0;
+
+                setThumbWidth(calculatedThumbWidth);
+                setThumbLeft(calculatedThumbLeft);
+            } else {
+                setHasHorizontalScrollableContent(false);
+            }
         }, [
             findScrollableElement,
             clearHideTimer,
@@ -715,6 +760,123 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             ]
         );
 
+        // 가로 썸 드래그 시작
+        const handleHorizontalThumbMouseDown = useCallback(
+            (event: React.MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const actualScrollContainer = findScrollableElement();
+                if (!actualScrollContainer) {
+                    return;
+                }
+
+                setIsDraggingHorizontal(true);
+                setDragStartHorizontal({
+                    x: event.clientX,
+                    scrollLeft: actualScrollContainer.scrollLeft,
+                });
+
+                clearHideTimer();
+                setScrollbarVisible(true);
+
+                // 포커스 유지 (키보드 입력이 계속 작동하도록)
+                maintainFocus();
+            },
+            [findScrollableElement, clearHideTimer, maintainFocus]
+        );
+
+        // 가로 썸 드래그 중
+        const handleHorizontalMouseMove = useCallback(
+            (event: MouseEvent) => {
+                if (!isDraggingHorizontal) return;
+
+                const actualScrollContainer = findScrollableElement();
+                if (!actualScrollContainer) {
+                    return;
+                }
+
+                const containerWidth = actualScrollContainer.clientWidth;
+                const contentWidth = actualScrollContainer.scrollWidth;
+                const scrollableWidth = contentWidth - containerWidth;
+
+                const deltaX = event.clientX - dragStartHorizontal.x;
+                const thumbScrollableWidth = containerWidth - thumbWidth;
+                const scrollDelta =
+                    (deltaX / thumbScrollableWidth) * scrollableWidth;
+
+                const newScrollLeft = Math.max(
+                    0,
+                    Math.min(
+                        scrollableWidth,
+                        dragStartHorizontal.scrollLeft + scrollDelta
+                    )
+                );
+
+                actualScrollContainer.scrollLeft = newScrollLeft;
+                updateScrollbar();
+            },
+            [
+                isDraggingHorizontal,
+                dragStartHorizontal,
+                thumbWidth,
+                updateScrollbar,
+                findScrollableElement,
+            ]
+        );
+
+        // 가로 썸 드래그 종료
+        const handleHorizontalMouseUp = useCallback(() => {
+            setIsDraggingHorizontal(false);
+            if (isScrollable()) {
+                setHideTimer(finalAutoHideConfig.delay); // 기본 숨김 시간 적용
+            }
+        }, [isScrollable, setHideTimer, finalAutoHideConfig.delay]);
+
+        // 가로 트랙 클릭으로 스크롤 점프
+        const handleHorizontalTrackClick = useCallback(
+            (event: React.MouseEvent) => {
+                if (!scrollbarRef.current) {
+                    return;
+                }
+
+                const scrollbar = scrollbarRef.current;
+                const rect = scrollbar.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+
+                const actualScrollContainer = findScrollableElement();
+                if (!actualScrollContainer) {
+                    return;
+                }
+
+                const containerWidth = actualScrollContainer.clientWidth;
+                const contentWidth = actualScrollContainer.scrollWidth;
+
+                const scrollRatio = clickX / containerWidth;
+                const newScrollLeft =
+                    scrollRatio * (contentWidth - containerWidth);
+
+                actualScrollContainer.scrollLeft = Math.max(
+                    0,
+                    Math.min(contentWidth - containerWidth, newScrollLeft)
+                );
+                updateScrollbar();
+
+                setScrollbarVisible(true);
+                setHideTimer(finalAutoHideConfig.delay);
+
+                // 포커스 유지 (키보드 입력이 계속 작동하도록)
+                maintainFocus();
+            },
+            [
+                updateScrollbar,
+                setHideTimer,
+                finalAutoHideConfig.delay,
+                findScrollableElement,
+                maintainFocus,
+            ]
+        );
+
         // 드래그 스크롤 시작
         const handleDragScrollStart = useCallback(
             (event: React.MouseEvent) => {
@@ -736,7 +898,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // 스크롤 가능한 영역이 아니면 제외
                 if (
                     scrollableElement.scrollHeight <=
-                    scrollableElement.clientHeight
+                        scrollableElement.clientHeight &&
+                    scrollableElement.scrollWidth <=
+                        scrollableElement.clientWidth
                 )
                     return;
 
@@ -779,7 +943,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // 실제 드래그가 발생했으므로 스크롤바 표시
                 setScrollbarVisible(true);
 
-                // 세로 스크롤만 처리 (가로 스크롤은 필요시 나중에 추가)
+                // 세로 스크롤 처리
                 const newScrollTop = Math.max(
                     0,
                     Math.min(
@@ -789,7 +953,18 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     )
                 );
 
+                // 가로 스크롤 처리
+                const newScrollLeft = Math.max(
+                    0,
+                    Math.min(
+                        scrollableElement.scrollWidth -
+                            scrollableElement.clientWidth,
+                        dragScrollStart.scrollLeft + deltaX
+                    )
+                );
+
                 scrollableElement.scrollTop = newScrollTop;
+                scrollableElement.scrollLeft = newScrollLeft;
                 updateScrollbar();
             },
             [
@@ -1066,6 +1241,31 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 };
             }
         }, [isDragging, handleMouseMove, handleMouseUp]);
+
+        // 가로 전역 마우스 이벤트 리스너
+        useEffect(() => {
+            if (isDraggingHorizontal) {
+                document.addEventListener(
+                    "mousemove",
+                    handleHorizontalMouseMove
+                );
+                document.addEventListener("mouseup", handleHorizontalMouseUp);
+                return () => {
+                    document.removeEventListener(
+                        "mousemove",
+                        handleHorizontalMouseMove
+                    );
+                    document.removeEventListener(
+                        "mouseup",
+                        handleHorizontalMouseUp
+                    );
+                };
+            }
+        }, [
+            isDraggingHorizontal,
+            handleHorizontalMouseMove,
+            handleHorizontalMouseUp,
+        ]);
 
         // 초기 스크롤바 업데이트
         useEffect(() => {
@@ -1493,6 +1693,102 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         }}
                     >
                         ▼
+                    </div>
+                )}
+
+                {/* 가로 커스텀 스크롤바 */}
+                {showScrollbar && hasHorizontalScrollableContent && (
+                    <div
+                        className="overlay-scrollbar-horizontal-track"
+                        onMouseEnter={() => {
+                            // 숨김 타이머는 즉시 취소
+                            clearHideTimer();
+
+                            // 호버 진입 타이머 설정 (100ms 후 표시)
+                            hoverEnterTimeoutRef.current = setTimeout(() => {
+                                setScrollbarVisible(true);
+                                hoverEnterTimeoutRef.current = null;
+                            }, 100);
+                        }}
+                        onMouseLeave={() => {
+                            // 호버 진입 타이머 취소 (지나가기만 한 경우)
+                            clearHoverEnterTimer();
+
+                            if (!isDraggingHorizontal) {
+                                setHideTimer(finalAutoHideConfig.delay);
+                            }
+                        }}
+                        style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            width: "100%",
+                            height: `${adjustedTrackWidth}px`,
+                            opacity: scrollbarVisible ? 1 : 0,
+                            transition: "opacity 0.2s ease-in-out",
+                            cursor: "pointer",
+                            zIndex: 1000,
+                            pointerEvents: "auto",
+                        }}
+                    >
+                        {/* 가로 스크롤바 트랙 배경 */}
+                        {finalTrackConfig.visible && (
+                            <div
+                                className="overlay-scrollbar-horizontal-track-background"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleHorizontalTrackClick(e);
+                                }}
+                                style={{
+                                    position: "absolute",
+                                    bottom: `${finalTrackConfig.margin}px`,
+                                    left: `${finalTrackConfig.margin}px`,
+                                    width: `calc(100% - ${
+                                        finalTrackConfig.margin * 2
+                                    }px)`,
+                                    height: `${finalThumbWidth}px`,
+                                    backgroundColor: finalTrackConfig.color,
+                                    borderRadius: `${finalTrackConfig.radius}px`,
+                                    cursor: "pointer",
+                                }}
+                            />
+                        )}
+
+                        {/* 가로 스크롤바 썸 */}
+                        <div
+                            className="overlay-scrollbar-horizontal-thumb"
+                            onMouseDown={handleHorizontalThumbMouseDown}
+                            onMouseEnter={() =>
+                                setIsHorizontalThumbHovered(true)
+                            }
+                            onMouseLeave={() =>
+                                setIsHorizontalThumbHovered(false)
+                            }
+                            style={{
+                                position: "absolute",
+                                bottom: `${finalTrackConfig.margin}px`,
+                                left: `${
+                                    finalTrackConfig.margin + thumbLeft
+                                }px`,
+                                width: `${Math.max(thumbWidth, 50)}px`,
+                                height: `${finalThumbWidth}px`,
+                                backgroundColor:
+                                    isHorizontalThumbHovered ||
+                                    isDraggingHorizontal
+                                        ? finalThumbConfig.hoverColor
+                                        : finalThumbConfig.color,
+                                opacity:
+                                    isHorizontalThumbHovered ||
+                                    isDraggingHorizontal
+                                        ? finalThumbConfig.hoverOpacity
+                                        : finalThumbConfig.opacity,
+                                borderRadius: `${finalThumbConfig.radius}px`,
+                                cursor: "pointer",
+                                transition:
+                                    "background-color 0.2s ease-in-out, opacity 0.2s ease-in-out",
+                            }}
+                        />
                     </div>
                 )}
             </div>

@@ -5,6 +5,7 @@ import SimpleTest from "./pages/SimpleTest";
 import DialogTest from "./pages/DialogTest";
 import NestedTest from "./pages/NestedTest";
 import EditorTest from "./pages/EditorTest";
+import HorizontalVerticalTest from "./pages/HorizontalVerticalTest";
 import "./App.css";
 
 // Original Test 컴포넌트 분리
@@ -814,6 +815,12 @@ function App() {
                     <Link to="/editor" style={navStyle("/editor")}>
                         Editor Test
                     </Link>
+                    <Link
+                        to="/horizontal-vertical"
+                        style={navStyle("/horizontal-vertical")}
+                    >
+                        Horizontal & Vertical Test
+                    </Link>
                 </div>
             </header>
 
@@ -824,6 +831,10 @@ function App() {
                     <Route path="/dialog" element={<DialogTest />} />
                     <Route path="/nested" element={<NestedTest />} />
                     <Route path="/editor" element={<EditorTest />} />
+                    <Route
+                        path="/horizontal-vertical"
+                        element={<HorizontalVerticalTest />}
+                    />
                 </Routes>
             </div>
         </div>
