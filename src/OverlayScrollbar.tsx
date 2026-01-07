@@ -1742,11 +1742,16 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                 }}
                                 style={{
                                     position: "absolute",
-                                    bottom: `${finalTrackConfig.margin}px`,
+                                    bottom: 0,
                                     left: `${finalTrackConfig.margin}px`,
-                                    width: `calc(100% - ${
-                                        finalTrackConfig.margin * 2
-                                    }px)`,
+                                    right:
+                                        finalTrackConfig.alignment ===
+                                            "outside" && hasScrollableContent
+                                            ? `${
+                                                  adjustedTrackWidth -
+                                                  finalTrackConfig.margin
+                                              }px`
+                                            : `${finalTrackConfig.margin}px`,
                                     height: `${finalThumbWidth}px`,
                                     backgroundColor: finalTrackConfig.color,
                                     borderRadius: `${finalTrackConfig.radius}px`,
@@ -1767,10 +1772,28 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             }
                             style={{
                                 position: "absolute",
-                                bottom: `${finalTrackConfig.margin}px`,
+                                bottom: 0,
                                 left: `${
                                     finalTrackConfig.margin + thumbLeft
                                 }px`,
+                                right:
+                                    finalTrackConfig.alignment === "outside" &&
+                                    hasScrollableContent
+                                        ? `${
+                                              adjustedTrackWidth -
+                                              finalTrackConfig.margin
+                                          }px`
+                                        : "auto",
+                                maxWidth:
+                                    finalTrackConfig.alignment === "outside" &&
+                                    hasScrollableContent
+                                        ? `calc(100% - ${
+                                              finalTrackConfig.margin +
+                                              thumbLeft +
+                                              adjustedTrackWidth -
+                                              finalTrackConfig.margin
+                                          }px)`
+                                        : "none",
                                 width: `${Math.max(thumbWidth, 50)}px`,
                                 height: `${finalThumbWidth}px`,
                                 backgroundColor:
