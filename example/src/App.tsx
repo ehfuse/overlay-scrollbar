@@ -25,8 +25,8 @@ function OriginalTest() {
     const [trackOpacity, setTrackOpacity] = useState(0.1);
     const [trackRadius, setTrackRadius] = useState(4);
     const [trackMargin, setTrackMargin] = useState(4);
-    const [trackAlignment, setTrackAlignment] = useState<"center" | "outside">(
-        "center"
+    const [trackAlignment, setTrackAlignment] = useState<"default" | "outside">(
+        "default"
     );
     const [showArrows, setShowArrows] = useState(false);
     const [arrowStep, setArrowStep] = useState(50);
@@ -499,7 +499,7 @@ function OriginalTest() {
                                 value={trackAlignment}
                                 onChange={(e) =>
                                     setTrackAlignment(
-                                        e.target.value as "center" | "outside"
+                                        e.target.value as "default" | "outside"
                                     )
                                 }
                                 style={{
@@ -508,8 +508,8 @@ function OriginalTest() {
                                     fontSize: "14px",
                                 }}
                             >
-                                <option value="center">중앙</option>
-                                <option value="right">오른쪽</option>
+                                <option value="default">중앙</option>
+                                <option value="outside">오른쪽</option>
                             </select>
                         </div>
                     </div>

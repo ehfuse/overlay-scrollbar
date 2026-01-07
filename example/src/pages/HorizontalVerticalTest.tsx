@@ -80,7 +80,7 @@ const HorizontalVerticalTest = () => {
                         radius: 5,
                     }}
                     track={{
-                        alignment: "center",
+                        alignment: "outside",
                         color: "#ecf0f1",
                         radius: 5,
                         margin: 3,

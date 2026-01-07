@@ -51,7 +51,7 @@ export interface TrackConfig {
     width?: number; // 호버 영역인 트랙의 너비 (기본값: 16px)
     color?: string; // 트랙 배경 색상 (기본값: "rgba(128, 128, 128, 0.1)")
     visible?: boolean; // 트랙 배경 표시 여부 (기본값: true)
-    alignment?: "center" | "outside"; // 트랙 정렬 (기본값: "center", "outside"는 오른쪽/아래 끝에 붙음)
+    alignment?: "default" | "outside"; // 트랙 정렬 (기본값: "default", "outside"는 오른쪽/아래 끝에 붙음)
     radius?: number; // 트랙 배경의 border-radius (기본값: thumb.radius 또는 4px)
     margin?: number; // 트랙 상하 마진 (기본값: 4px)
     overflowX?: boolean; // 가로 스크롤바 활성화 여부 (기본값: true)
@@ -255,7 +255,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 width: track.width ?? 16,
                 color: track.color ?? "rgba(128, 128, 128, 0.1)",
                 visible: track.visible ?? true,
-                alignment: track.alignment ?? "center",
+                alignment: track.alignment ?? "default",
                 radius: track.radius ?? finalThumbConfig.radius ?? 4,
                 margin: track.margin ?? 4,
                 overflowX: track.overflowX ?? true,
@@ -1779,12 +1779,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                                       adjustedTrackWidth -
                                                       finalTrackConfig.margin
                                                   }px`
-                                                : `${
-                                                      (adjustedTrackWidth -
-                                                          finalThumbWidth) /
-                                                          2 +
-                                                      finalTrackConfig.margin
-                                                  }px`
+                                                : `${adjustedTrackWidth}px`
                                             : `${finalTrackConfig.margin}px`,
                                         height: `${finalThumbWidth}px`,
                                         backgroundColor: finalTrackConfig.color,
@@ -1824,12 +1819,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                                   adjustedTrackWidth -
                                                   finalTrackConfig.margin
                                               }px`
-                                            : `${
-                                                  (adjustedTrackWidth -
-                                                      finalThumbWidth) /
-                                                      2 +
-                                                  finalTrackConfig.margin
-                                              }px`
+                                            : `${adjustedTrackWidth}px`
                                         : "auto",
                                     maxWidth: hasScrollableContent
                                         ? finalTrackConfig.alignment ===
@@ -1843,10 +1833,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                             : `calc(100% - ${
                                                   finalTrackConfig.margin +
                                                   thumbLeft +
-                                                  (adjustedTrackWidth -
-                                                      finalThumbWidth) /
-                                                      2 +
-                                                  finalTrackConfig.margin
+                                                  adjustedTrackWidth
                                               }px)`
                                         : "none",
                                     width: `${Math.max(thumbWidth, 50)}px`,

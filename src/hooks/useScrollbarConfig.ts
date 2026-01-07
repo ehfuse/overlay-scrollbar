@@ -49,7 +49,7 @@ export const useScrollbarConfig = ({
             width: track.width ?? 16,
             color: track.color ?? "rgba(128, 128, 128, 0.1)",
             visible: track.visible ?? true,
-            alignment: track.alignment ?? "center",
+            alignment: track.alignment ?? "default",
             radius: track.radius ?? finalThumbConfig.radius ?? 4,
             margin: track.margin ?? 4,
         }),

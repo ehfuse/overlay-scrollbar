@@ -78,7 +78,7 @@ v1.3.0부터는 관련 설정들을 객체로 그룹화하여 더 깔끔한 API�
     track={{
         width: 16,
         color: "rgba(128, 128, 128, 0.1)",
-        alignment: "center",
+        alignment: "default",
         radius: 4,
         margin: 4,
     }}
@@ -432,7 +432,7 @@ const MyComponent: React.FC = () => {
 | `width`     | `number`              | `16`                         | 트랙 호버 영역 너비 (px) |
 | `color`     | `string`              | `"rgba(128, 128, 128, 0.1)"` | 트랙 배경 색상           |
 | `visible`   | `boolean`             | `true`                       | 트랙 배경 표시 여부      |
-| `alignment` | `"center" \| "right"` | `"center"`                   | 트랙 정렬 방식           |
+| `alignment` | `"default" \| "outside"` | `"default"`                   | 트랙 정렬 방식 (default: 중앙, outside: 바깥쪽 끝) |
 | `radius`    | `number`              | `thumb.radius \| 4`          | 트랙 둥근 모서리 (px)    |
 | `margin`    | `number`              | `4`                          | 트랙 상하 마진 (px)      |
 
@@ -497,10 +497,12 @@ interface ThumbConfig {
 interface TrackConfig {
     width?: number; // 기본값: 16px
     color?: string; // 기본값: "rgba(128, 128, 128, 0.1)"
-    visible?: boolean; // 기본가: true
-    alignment?: "center" | "right"; // 기본값: "center"
+    visible?: boolean; // 기본값: true
+    alignment?: "default" | "outside"; // 기본값: "default" (중앙), "outside" (바깥쪽 끝)
     radius?: number; // 기본값: thumb.radius 또는 4px
     margin?: number; // 기본값: 4px
+    overflowX?: boolean; // 기본값: true
+    overflowY?: boolean; // 기본값: true
 }
 
 interface ArrowsConfig {

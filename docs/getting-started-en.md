@@ -78,7 +78,7 @@ Starting from v1.3.0, related settings are grouped into objects for a cleaner AP
     track={{
         width: 16,
         color: "rgba(128, 128, 128, 0.1)",
-        alignment: "center",
+        alignment: "default",
         radius: 4,
         margin: 4,
     }}
@@ -435,7 +435,7 @@ The component provides three style props for different layers:
 | `width`     | `number`              | `16`                         | Track hover area width (px)  |
 | `color`     | `string`              | `"rgba(128, 128, 128, 0.1)"` | Track background color       |
 | `visible`   | `boolean`             | `true`                       | Show track background        |
-| `alignment` | `"center" \| "right"` | `"center"`                   | Track alignment              |
+| `alignment` | `"default" \| "outside"` | `"default"`                   | Track alignment (default: center, outside: edge) |
 | `radius`    | `number`              | `thumb.radius \| 4`          | Track border radius (px)     |
 | `margin`    | `number`              | `4`                          | Track top/bottom margin (px) |
 
@@ -500,9 +500,11 @@ interface TrackConfig {
     width?: number; // default: 16px
     color?: string; // default: "rgba(128, 128, 128, 0.1)"
     visible?: boolean; // default: true
-    alignment?: "center" | "right"; // default: "center"
+    alignment?: "default" | "outside"; // default: "default" (center), "outside" (edge)
     radius?: number; // default: thumb.radius or 4px
     margin?: number; // default: 4px
+    overflowX?: boolean; // default: true
+    overflowY?: boolean; // default: true
 }
 
 interface ArrowsConfig {
