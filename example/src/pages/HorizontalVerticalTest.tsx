@@ -73,7 +73,7 @@ const HorizontalVerticalTest = () => {
                 <OverlayScrollbar
                     ref={scrollbarRef}
                     thumb={{
-                        width: 10,
+                        width: 4,
                         color: "#3498db",
                         opacity: 0.6,
                         hoverColor: "#2980b9",
@@ -82,7 +82,7 @@ const HorizontalVerticalTest = () => {
                     }}
                     track={{
                         alignment: "outside",
-                        width: 16,
+                        width: 4,
                         color: "#ecf0f1",
                         radius: 5,
                         margin: 3,
