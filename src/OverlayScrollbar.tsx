@@ -51,7 +51,7 @@ export interface TrackConfig {
     width?: number; // 호버 영역인 트랙의 너비 (기본값: 16px)
     color?: string; // 트랙 배경 색상 (기본값: "rgba(128, 128, 128, 0.1)")
     visible?: boolean; // 트랙 배경 표시 여부 (기본값: true)
-    alignment?: "center" | "right"; // 트랙 내부 정렬 (기본가: "center")
+    alignment?: "center" | "outside"; // 트랙 정렬 (기본값: "center", "outside"는 오른쪽/아래 끝에 붙음)
     radius?: number; // 트랙 배경의 border-radius (기본값: thumb.radius 또는 4px)
     margin?: number; // 트랙 상하 마진 (기본값: 4px)
 }
