@@ -218,6 +218,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 초기 마운트 시 hover 방지용
         const [isInitialized, setIsInitialized] = useState(false);
 
+        // wrapper의 padding-bottom 저장
+        const [wrapperPaddingBottom, setWrapperPaddingBottom] = useState(0);
+
         // 휠 스크롤 감지용
         const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         const [isWheelScrolling, setIsWheelScrolling] = useState(false);
@@ -507,14 +510,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             // wrapper의 패딩 계산 (상하 패딩만 필요)
             let wrapperPaddingTopBottom = 0;
+            let paddingBottom = 0;
             if (wrapperRef.current) {
                 const computedStyle = window.getComputedStyle(
                     wrapperRef.current
                 );
                 const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-                const paddingBottom =
-                    parseFloat(computedStyle.paddingBottom) || 0;
+                paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
                 wrapperPaddingTopBottom = paddingTop + paddingBottom;
+                setWrapperPaddingBottom(paddingBottom);
             }
 
             // 화살표와 간격 공간 계산 (화살표 + 위아래 마진, 화살표 없어도 위아래 마진)
@@ -1720,7 +1724,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         }}
                         style={{
                             position: "absolute",
-                            bottom: 0,
+                            bottom: `${wrapperPaddingBottom}px`,
                             left: 0,
                             width: "100%",
                             height: `${adjustedTrackWidth}px`,
