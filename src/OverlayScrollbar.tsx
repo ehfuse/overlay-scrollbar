@@ -1534,7 +1534,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                           }px`
                                         : `${finalTrackConfig.margin}px`,
                                     right:
-                                        finalTrackConfig.alignment === "right"
+                                        finalTrackConfig.alignment === "outside"
                                             ? "0px"
                                             : `${
                                                   (adjustedTrackWidth -
@@ -1573,7 +1573,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                         : finalTrackConfig.margin) + thumbTop
                                 }px`,
                                 right:
-                                    finalTrackConfig.alignment === "right"
+                                    finalTrackConfig.alignment === "outside"
                                         ? "0px"
                                         : `${
                                               (adjustedTrackWidth -
@@ -1613,7 +1613,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             position: "absolute",
                             top: `${finalTrackConfig.margin}px`,
                             right:
-                                finalTrackConfig.alignment === "right"
+                                finalTrackConfig.alignment === "outside"
                                     ? "0px"
                                     : `${
                                           (adjustedTrackWidth -
@@ -1660,7 +1660,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             position: "absolute",
                             bottom: `${finalTrackConfig.margin}px`,
                             right:
-                                finalTrackConfig.alignment === "right"
+                                finalTrackConfig.alignment === "outside"
                                     ? "0px"
                                     : `${
                                           (adjustedTrackWidth -
