@@ -25,7 +25,7 @@ function OriginalTest() {
     const [trackOpacity, setTrackOpacity] = useState(0.1);
     const [trackRadius, setTrackRadius] = useState(4);
     const [trackMargin, setTrackMargin] = useState(4);
-    const [trackAlignment, setTrackAlignment] = useState<"center" | "right">(
+    const [trackAlignment, setTrackAlignment] = useState<"center" | "outside">(
         "center"
     );
     const [showArrows, setShowArrows] = useState(false);
@@ -499,7 +499,7 @@ function OriginalTest() {
                                 value={trackAlignment}
                                 onChange={(e) =>
                                     setTrackAlignment(
-                                        e.target.value as "center" | "right"
+                                        e.target.value as "center" | "outside"
                                     )
                                 }
                                 style={{
