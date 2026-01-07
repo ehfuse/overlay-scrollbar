@@ -63,11 +63,10 @@ const HorizontalVerticalTest = () => {
                 style={{
                     width: "1000px",
                     height: "600px",
-                    border: "2px solid #333",
+                    border: "1px solid #333",
                     margin: "20px",
-                    borderRadius: "8px",
                     overflow: "hidden",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    boxShadow: "0 1px 8px rgba(0,0,0,0.1)",
                 }}
             >
                 <OverlayScrollbar
@@ -81,8 +80,7 @@ const HorizontalVerticalTest = () => {
                         radius: 5,
                     }}
                     track={{
-                        alignment: "outside",
-                        width: 4,
+                        alignment: "center",
                         color: "#ecf0f1",
                         radius: 5,
                         margin: 3,

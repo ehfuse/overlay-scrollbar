@@ -1762,17 +1762,30 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                     }}
                                     style={{
                                         position: "absolute",
-                                        bottom: 0,
-                                        left: `${finalTrackConfig.margin}px`,
-                                        right:
+                                        bottom:
                                             finalTrackConfig.alignment ===
-                                                "outside" &&
-                                            hasScrollableContent
+                                            "outside"
+                                                ? "0px"
+                                                : `${
+                                                      (adjustedTrackWidth -
+                                                          finalThumbWidth) /
+                                                      2
+                                                  }px`,
+                                        left: `${finalTrackConfig.margin}px`,
+                                        right: hasScrollableContent
+                                            ? finalTrackConfig.alignment ===
+                                              "outside"
                                                 ? `${
                                                       adjustedTrackWidth -
                                                       finalTrackConfig.margin
                                                   }px`
-                                                : `${finalTrackConfig.margin}px`,
+                                                : `${
+                                                      (adjustedTrackWidth -
+                                                          finalThumbWidth) /
+                                                          2 +
+                                                      finalTrackConfig.margin
+                                                  }px`
+                                            : `${finalTrackConfig.margin}px`,
                                         height: `${finalThumbWidth}px`,
                                         backgroundColor: finalTrackConfig.color,
                                         borderRadius: `${finalTrackConfig.radius}px`,
@@ -1793,28 +1806,49 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                 }
                                 style={{
                                     position: "absolute",
-                                    bottom: 0,
+                                    bottom:
+                                        finalTrackConfig.alignment === "outside"
+                                            ? "0px"
+                                            : `${
+                                                  (adjustedTrackWidth -
+                                                      finalThumbWidth) /
+                                                  2
+                                              }px`,
                                     left: `${
                                         finalTrackConfig.margin + thumbLeft
                                     }px`,
-                                    right:
-                                        finalTrackConfig.alignment ===
-                                            "outside" && hasScrollableContent
+                                    right: hasScrollableContent
+                                        ? finalTrackConfig.alignment ===
+                                          "outside"
                                             ? `${
                                                   adjustedTrackWidth -
                                                   finalTrackConfig.margin
                                               }px`
-                                            : "auto",
-                                    maxWidth:
-                                        finalTrackConfig.alignment ===
-                                            "outside" && hasScrollableContent
+                                            : `${
+                                                  (adjustedTrackWidth -
+                                                      finalThumbWidth) /
+                                                      2 +
+                                                  finalTrackConfig.margin
+                                              }px`
+                                        : "auto",
+                                    maxWidth: hasScrollableContent
+                                        ? finalTrackConfig.alignment ===
+                                          "outside"
                                             ? `calc(100% - ${
                                                   finalTrackConfig.margin +
                                                   thumbLeft +
                                                   adjustedTrackWidth -
                                                   finalTrackConfig.margin
                                               }px)`
-                                            : "none",
+                                            : `calc(100% - ${
+                                                  finalTrackConfig.margin +
+                                                  thumbLeft +
+                                                  (adjustedTrackWidth -
+                                                      finalThumbWidth) /
+                                                      2 +
+                                                  finalTrackConfig.margin
+                                              }px)`
+                                        : "none",
                                     width: `${Math.max(thumbWidth, 50)}px`,
                                     height: `${finalThumbWidth}px`,
                                     backgroundColor:
