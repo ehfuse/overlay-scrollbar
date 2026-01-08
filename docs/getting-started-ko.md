@@ -427,14 +427,14 @@ const MyComponent: React.FC = () => {
 
 #### TrackConfig
 
-| 속성        | 타입                  | 기본값                       | 설명                     |
-| ----------- | --------------------- | ---------------------------- | ------------------------ |
-| `width`     | `number`              | `16`                         | 트랙 호버 영역 너비 (px) |
-| `color`     | `string`              | `"rgba(128, 128, 128, 0.1)"` | 트랙 배경 색상           |
-| `visible`   | `boolean`             | `true`                       | 트랙 배경 표시 여부      |
-| `alignment` | `"default" \| "outside"` | `"default"`                   | 트랙 정렬 방식 (default: 중앙, outside: 바깥쪽 끝) |
-| `radius`    | `number`              | `thumb.radius \| 4`          | 트랙 둥근 모서리 (px)    |
-| `margin`    | `number`              | `4`                          | 트랙 상하 마진 (px)      |
+| 속성        | 타입                     | 기본값                       | 설명                                               |
+| ----------- | ------------------------ | ---------------------------- | -------------------------------------------------- |
+| `width`     | `number`                 | `16`                         | 트랙 호버 영역 너비 (px)                           |
+| `color`     | `string`                 | `"rgba(128, 128, 128, 0.1)"` | 트랙 배경 색상                                     |
+| `visible`   | `boolean`                | `true`                       | 트랙 배경 표시 여부                                |
+| `alignment` | `"default" \| "outside"` | `"default"`                  | 트랙 정렬 방식 (default: 중앙, outside: 바깥쪽 끝) |
+| `radius`    | `number`                 | `thumb.radius \| 4`          | 트랙 둥근 모서리 (px)                              |
+| `margin`    | `number`                 | `4`                          | 트랙 상하 마진 (px)                                |
 
 #### ArrowsConfig
 

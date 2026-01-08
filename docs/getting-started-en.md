@@ -430,14 +430,14 @@ The component provides three style props for different layers:
 
 #### TrackConfig
 
-| Property    | Type                  | Default                      | Description                  |
-| ----------- | --------------------- | ---------------------------- | ---------------------------- |
-| `width`     | `number`              | `16`                         | Track hover area width (px)  |
-| `color`     | `string`              | `"rgba(128, 128, 128, 0.1)"` | Track background color       |
-| `visible`   | `boolean`             | `true`                       | Show track background        |
-| `alignment` | `"default" \| "outside"` | `"default"`                   | Track alignment (default: center, outside: edge) |
-| `radius`    | `number`              | `thumb.radius \| 4`          | Track border radius (px)     |
-| `margin`    | `number`              | `4`                          | Track top/bottom margin (px) |
+| Property    | Type                     | Default                      | Description                                      |
+| ----------- | ------------------------ | ---------------------------- | ------------------------------------------------ |
+| `width`     | `number`                 | `16`                         | Track hover area width (px)                      |
+| `color`     | `string`                 | `"rgba(128, 128, 128, 0.1)"` | Track background color                           |
+| `visible`   | `boolean`                | `true`                       | Show track background                            |
+| `alignment` | `"default" \| "outside"` | `"default"`                  | Track alignment (default: center, outside: edge) |
+| `radius`    | `number`                 | `thumb.radius \| 4`          | Track border radius (px)                         |
+| `margin`    | `number`                 | `4`                          | Track top/bottom margin (px)                     |
 
 #### ArrowsConfig
 
