@@ -1386,6 +1386,11 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const style = document.createElement("style");
             style.id = styleId;
             style.textContent = `
+                /* 모든 스크롤바 숨기기 */
+                .overlay-scrollbar-container {
+                    scrollbar-width: none !important;
+                    -ms-overflow-style: none !important;
+                }
                 .overlay-scrollbar-container::-webkit-scrollbar {
                     display: none !important;
                     width: 0 !important;
@@ -1401,6 +1406,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 .overlay-scrollbar-container .ehfuse-editor-content {
                     scrollbar-width: thin !important;
                     -ms-overflow-style: auto !important;
+                    overflow: auto !important;
                 }
                 .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar {
                     display: block !important;
@@ -1463,10 +1469,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         width: "100%", // 명시적 너비 설정
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
-                        overflow: "auto", // 네이티브 스크롤 기능 유지
-                        // 브라우저 기본 스크롤바만 숨기기
-                        scrollbarWidth: "none", // Firefox
-                        msOverflowStyle: "none", // IE/Edge
+                        overflow: "hidden", // 네이티브 스크롤바 숨기기
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
                         userSelect: isDragScrolling ? "none" : "auto", // 드래그 중 텍스트 선택 방지
