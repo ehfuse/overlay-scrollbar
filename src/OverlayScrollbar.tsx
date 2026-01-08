@@ -1455,6 +1455,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     minHeight: 0, // shrink 가능하도록
                     height: "100%", // 부모의 전체 높이 사용
                     flex: "1 1 0%", // 기본적으로 flex item으로 동작
+                    overflow: "hidden", // 네이티브 스크롤바 완전 숨김
                     ...style, // 사용자가 flex를 override 할 수 있도록 style을 뒤에 배치
                 }}
             >
@@ -1469,7 +1470,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         width: "100%", // 명시적 너비 설정
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
-                        overflow: "hidden", // 네이티브 스크롤바 숨기기
+                        overflow: "auto", // 네이티브 스크롤 기능 유지
+                        // 브라우저 기본 스크롤바만 숨기기
+                        scrollbarWidth: "none", // Firefox
+                        msOverflowStyle: "none", // IE/Edge
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
                         userSelect: isDragScrolling ? "none" : "auto", // 드래그 중 텍스트 선택 방지
@@ -1484,7 +1488,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             minHeight: 0, // flex shrink 허용
                             display: "flex", // flex 컨테이너로 설정
                             flexDirection: "column", // 세로 방향 정렬
-                            overflow: "hidden", // 네이티브 스크롤바 방지
                             ...contentStyle, // 사용자 정의 스타일 적용
                         }}
                     >
