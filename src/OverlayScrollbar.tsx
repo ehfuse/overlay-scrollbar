@@ -203,6 +203,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         ] = useState(false);
 
         // 드래그 스크롤 상태
+        const [isDragScrollPending, setIsDragScrollPending] = useState(false);
         const [isDragScrolling, setIsDragScrolling] = useState(false);
         const [dragScrollStart, setDragScrollStart] = useState({
             x: 0,
@@ -464,6 +465,30 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 wheelShowTimeoutRef.current = null;
             }
         }, []);
+
+        // 스크롤 영역 바깥으로 나가면 스크롤바를 즉시 숨긴다.
+        const handleWrapperMouseLeave = useCallback(() => {
+            clearHoverEnterTimer();
+
+            if (
+                isDragging ||
+                isDraggingHorizontal ||
+                isDragScrolling ||
+                isDragScrollPending
+            ) {
+                return;
+            }
+
+            clearHideTimer();
+            setScrollbarVisible(false);
+        }, [
+            clearHideTimer,
+            clearHoverEnterTimer,
+            isDragging,
+            isDraggingHorizontal,
+            isDragScrolling,
+            isDragScrollPending,
+        ]);
 
         // 스크롤바 숨기기 타이머
         const setHideTimer = useCallback(
@@ -913,7 +938,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     return;
 
                 event.preventDefault();
-                setIsDragScrolling(true);
+                setIsDragScrollPending(true);
                 setDragScrollStart({
                     x: event.clientX,
                     y: event.clientY,
@@ -935,7 +960,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 드래그 스크롤 중
         const handleDragScrollMove = useCallback(
             (event: MouseEvent) => {
-                if (!isDragScrolling) return;
+                if (!isDragScrollPending && !isDragScrolling) return;
 
                 const scrollableElement = findScrollableElement();
                 if (!scrollableElement) return;
@@ -943,9 +968,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 const deltaX = dragScrollStart.x - event.clientX;
                 const deltaY = dragScrollStart.y - event.clientY;
 
-                // 미세한 움직임 무시 (3px 이하)
-                if (Math.abs(deltaY) < 3 && Math.abs(deltaX) < 3) {
+                // 5px 이상 움직였을 때만 실제 드래그 스크롤을 시작한다.
+                if (Math.abs(deltaY) < 5 && Math.abs(deltaX) < 5) {
                     return;
+                }
+
+                if (isDragScrollPending) {
+                    setIsDragScrollPending(false);
+                    setIsDragScrolling(true);
                 }
 
                 // 실제 드래그가 발생했으므로 스크롤바 표시
@@ -976,6 +1006,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
             },
             [
+                isDragScrollPending,
                 isDragScrolling,
                 dragScrollStart,
                 findScrollableElement,
@@ -985,11 +1016,19 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 드래그 스크롤 종료
         const handleDragScrollEnd = useCallback(() => {
+            const wasDragScrolling = isDragScrolling;
+            setIsDragScrollPending(false);
             setIsDragScrolling(false);
-            if (isScrollable()) {
+
+            if (wasDragScrolling && isScrollable()) {
                 setHideTimer(finalAutoHideConfig.delay);
             }
-        }, [isScrollable, setHideTimer, finalAutoHideConfig.delay]);
+        }, [
+            isDragScrolling,
+            isScrollable,
+            setHideTimer,
+            finalAutoHideConfig.delay,
+        ]);
 
         // 스크롤 이벤트 리스너 (externalScrollContainer 우선 사용)
         useEffect(() => {
@@ -1222,7 +1261,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 드래그 스크롤 전역 마우스 이벤트 리스너
         useEffect(() => {
-            if (isDragScrolling) {
+            if (isDragScrollPending || isDragScrolling) {
                 document.addEventListener("mousemove", handleDragScrollMove);
                 document.addEventListener("mouseup", handleDragScrollEnd);
                 return () => {
@@ -1236,7 +1275,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     );
                 };
             }
-        }, [isDragScrolling, handleDragScrollMove, handleDragScrollEnd]);
+        }, [
+            isDragScrollPending,
+            isDragScrolling,
+            handleDragScrollMove,
+            handleDragScrollEnd,
+        ]);
 
         // 전역 마우스 이벤트 리스너
         useEffect(() => {
@@ -1448,6 +1492,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             <div
                 ref={wrapperRef}
                 className={`overlay-scrollbar-wrapper ${className}`}
+                onMouseLeave={handleWrapperMouseLeave}
                 style={{
                     display: "flex",
                     flexDirection: "column",
@@ -1476,7 +1521,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         msOverflowStyle: "none", // IE/Edge
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
-                        userSelect: isDragScrolling ? "none" : "auto", // 드래그 중 텍스트 선택 방지
+                        userSelect:
+                            isDragScrollPending || isDragScrolling
+                                ? "none"
+                                : "auto", // 드래그 중 텍스트 선택 방지
                         ...containerStyle, // 사용자 정의 스타일 적용
                     }}
                 >
