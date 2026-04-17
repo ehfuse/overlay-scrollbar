@@ -140,7 +140,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             showScrollbar = true,
             detectInnerScroll = false,
         },
-        ref
+        ref,
     ) => {
         // props 변경 추적용 ref
         const prevPropsRef = useRef<{
@@ -212,10 +212,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             scrollLeft: 0,
         });
         const [activeArrow, setActiveArrow] = useState<"up" | "down" | null>(
-            null
+            null,
         );
         const [hoveredArrow, setHoveredArrow] = useState<"up" | "down" | null>(
-            null
+            null,
         );
 
         // 초기 마운트 시 hover 방지용
@@ -262,7 +262,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 overflowX: track.overflowX ?? true,
                 overflowY: track.overflowY ?? true,
             }),
-            [track, finalThumbConfig.radius]
+            [track, finalThumbConfig.radius],
         );
 
         const finalArrowsConfig = useMemo(() => {
@@ -283,7 +283,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 excludeClasses: dragScroll.excludeClasses ?? [],
                 excludeSelectors: dragScroll.excludeSelectors ?? [],
             }),
-            [dragScroll]
+            [dragScroll],
         );
 
         const finalAutoHideConfig = useMemo(
@@ -293,12 +293,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 delayOnWheel: autoHide.delayOnWheel ?? 700,
                 initialDelay: autoHide.initialDelay ?? 200,
             }),
-            [autoHide]
+            [autoHide],
         );
 
         // 초기 마운트 시 스크롤바 표시 지연 상태
         const [isInitialDelayActive, setIsInitialDelayActive] = useState(
-            () => (autoHide.initialDelay ?? 200) > 0
+            () => (autoHide.initialDelay ?? 200) > 0,
         );
 
         // 호환성을 위한 변수들 (자주 사용되는 변수들만 유지)
@@ -348,7 +348,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     return containerRef.current?.clientHeight || 0;
                 },
             }),
-            []
+            [],
         );
 
         // 실제 스크롤 가능한 요소 찾기 (캐싱 최적화)
@@ -391,7 +391,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             // 중첩된 OverlayScrollbar의 영역은 제외 (다른 OverlayScrollbar의 container는 스킵)
             const childScrollableElements =
                 containerRef.current.querySelectorAll(
-                    '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller, [style*="overflow: auto"], [style*="overflow:auto"]'
+                    '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller, [style*="overflow: auto"], [style*="overflow:auto"]',
                 );
 
             for (const child of childScrollableElements) {
@@ -414,7 +414,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 while (parent && parent !== containerRef.current) {
                     if (
                         parent.classList.contains(
-                            "overlay-scrollbar-container"
+                            "overlay-scrollbar-container",
                         ) &&
                         parent !== containerRef.current
                     ) {
@@ -503,7 +503,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     hideTimeoutRef.current = null;
                 }, delay);
             },
-            [clearHideTimer, finalAutoHideConfig.enabled]
+            [clearHideTimer, finalAutoHideConfig.enabled],
         );
 
         // 스크롤바 위치 및 크기 업데이트
@@ -542,7 +542,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             let paddingBottom = 0;
             if (wrapperRef.current) {
                 const computedStyle = window.getComputedStyle(
-                    wrapperRef.current
+                    wrapperRef.current,
                 );
                 const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
                 paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
@@ -561,7 +561,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const scrollRatio = containerHeight / contentHeight;
             const calculatedThumbHeight = Math.max(
                 availableHeight * scrollRatio,
-                thumbMinHeight
+                thumbMinHeight,
             );
 
             // 썸 위치 계산 (화살표와 간격 공간 제외)
@@ -584,7 +584,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 const scrollRatioHorizontal = containerWidth / contentWidth;
                 const calculatedThumbWidth = Math.max(
                     containerWidth * scrollRatioHorizontal,
-                    50 // 최소 너비
+                    50, // 최소 너비
                 );
 
                 const thumbScrollableWidth =
@@ -633,7 +633,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
                 maintainFocus();
             },
-            [findScrollableElement, clearHideTimer, maintainFocus]
+            [findScrollableElement, clearHideTimer, maintainFocus],
         );
 
         // 썸 드래그 중
@@ -659,8 +659,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     0,
                     Math.min(
                         scrollableHeight,
-                        dragStart.scrollTop + scrollDelta
-                    )
+                        dragStart.scrollTop + scrollDelta,
+                    ),
                 );
 
                 actualScrollContainer.scrollTop = newScrollTop;
@@ -672,7 +672,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 thumbHeight,
                 updateScrollbar,
                 findScrollableElement,
-            ]
+            ],
         );
 
         // 썸 드래그 종료
@@ -708,7 +708,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 actualScrollContainer.scrollTop = Math.max(
                     0,
-                    Math.min(contentHeight - containerHeight, newScrollTop)
+                    Math.min(contentHeight - containerHeight, newScrollTop),
                 );
                 updateScrollbar();
 
@@ -724,7 +724,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 finalAutoHideConfig.delay,
                 findScrollableElement,
                 maintainFocus,
-            ]
+            ],
         );
 
         // 위쪽 화살표 클릭 핸들러
@@ -737,7 +737,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 const newScrollTop = Math.max(
                     0,
-                    containerRef.current.scrollTop - arrowStep
+                    containerRef.current.scrollTop - arrowStep,
                 );
 
                 containerRef.current.scrollTop = newScrollTop;
@@ -755,7 +755,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 arrowStep,
                 finalAutoHideConfig.delay,
                 maintainFocus,
-            ]
+            ],
         );
 
         // 아래쪽 화살표 클릭 핸들러
@@ -772,7 +772,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     content.scrollHeight - container.clientHeight;
                 const newScrollTop = Math.min(
                     maxScrollTop,
-                    container.scrollTop + arrowStep
+                    container.scrollTop + arrowStep,
                 );
 
                 container.scrollTop = newScrollTop;
@@ -790,7 +790,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 arrowStep,
                 finalAutoHideConfig.delay,
                 maintainFocus,
-            ]
+            ],
         );
 
         // 가로 썸 드래그 시작
@@ -816,7 +816,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // 포커스 유지 (키보드 입력이 계속 작동하도록)
                 maintainFocus();
             },
-            [findScrollableElement, clearHideTimer, maintainFocus]
+            [findScrollableElement, clearHideTimer, maintainFocus],
         );
 
         // 가로 썸 드래그 중
@@ -842,8 +842,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     0,
                     Math.min(
                         scrollableWidth,
-                        dragStartHorizontal.scrollLeft + scrollDelta
-                    )
+                        dragStartHorizontal.scrollLeft + scrollDelta,
+                    ),
                 );
 
                 actualScrollContainer.scrollLeft = newScrollLeft;
@@ -855,7 +855,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 thumbWidth,
                 updateScrollbar,
                 findScrollableElement,
-            ]
+            ],
         );
 
         // 가로 썸 드래그 종료
@@ -891,7 +891,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 actualScrollContainer.scrollLeft = Math.max(
                     0,
-                    Math.min(contentWidth - containerWidth, newScrollLeft)
+                    Math.min(contentWidth - containerWidth, newScrollLeft),
                 );
                 updateScrollbar();
 
@@ -907,7 +907,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 finalAutoHideConfig.delay,
                 findScrollableElement,
                 maintainFocus,
-            ]
+            ],
         );
 
         // 드래그 스크롤 시작
@@ -954,7 +954,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 isTextInputElement,
                 findScrollableElement,
                 clearHideTimer,
-            ]
+            ],
         );
 
         // 드래그 스크롤 중
@@ -987,8 +987,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     Math.min(
                         scrollableElement.scrollHeight -
                             scrollableElement.clientHeight,
-                        dragScrollStart.scrollTop + deltaY
-                    )
+                        dragScrollStart.scrollTop + deltaY,
+                    ),
                 );
 
                 // 가로 스크롤 처리
@@ -997,8 +997,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     Math.min(
                         scrollableElement.scrollWidth -
                             scrollableElement.clientWidth,
-                        dragScrollStart.scrollLeft + deltaX
-                    )
+                        dragScrollStart.scrollLeft + deltaX,
+                    ),
                 );
 
                 scrollableElement.scrollTop = newScrollTop;
@@ -1011,7 +1011,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 dragScrollStart,
                 findScrollableElement,
                 updateScrollbar,
-            ]
+            ],
         );
 
         // 드래그 스크롤 종료
@@ -1100,7 +1100,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 // children 요소들의 스크롤도 감지 (중첩된 OverlayScrollbar 제외)
                 const childScrollableElements = container.querySelectorAll(
-                    '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller, [style*="overflow: auto"], [style*="overflow:auto"]'
+                    '[data-virtuoso-scroller], [style*="overflow"], .virtuoso-scroller, [style*="overflow: auto"], [style*="overflow:auto"]',
                 );
                 childScrollableElements.forEach((child) => {
                     const element = child as HTMLElement;
@@ -1109,7 +1109,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     if (
                         element !== container &&
                         element.classList.contains(
-                            "overlay-scrollbar-container"
+                            "overlay-scrollbar-container",
                         )
                     ) {
                         return;
@@ -1120,7 +1120,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     while (parent && parent !== container) {
                         if (
                             parent.classList.contains(
-                                "overlay-scrollbar-container"
+                                "overlay-scrollbar-container",
                             ) &&
                             parent !== container
                         ) {
@@ -1202,7 +1202,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         event.preventDefault();
                         newScrollTop = Math.min(
                             maxScrollTop,
-                            scrollTop + lineScrollStep
+                            scrollTop + lineScrollStep,
                         );
                         break;
                     case "PageUp":
@@ -1213,7 +1213,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         event.preventDefault();
                         newScrollTop = Math.min(
                             maxScrollTop,
-                            scrollTop + clientHeight
+                            scrollTop + clientHeight,
                         );
                         break;
                     case "Home":
@@ -1276,11 +1276,11 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 return () => {
                     document.removeEventListener(
                         "mousemove",
-                        handleDragScrollMove
+                        handleDragScrollMove,
                     );
                     document.removeEventListener(
                         "mouseup",
-                        handleDragScrollEnd
+                        handleDragScrollEnd,
                     );
                 };
             }
@@ -1308,17 +1308,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             if (isDraggingHorizontal) {
                 document.addEventListener(
                     "mousemove",
-                    handleHorizontalMouseMove
+                    handleHorizontalMouseMove,
                 );
                 document.addEventListener("mouseup", handleHorizontalMouseUp);
                 return () => {
                     document.removeEventListener(
                         "mousemove",
-                        handleHorizontalMouseMove
+                        handleHorizontalMouseMove,
                     );
                     document.removeEventListener(
                         "mouseup",
-                        handleHorizontalMouseUp
+                        handleHorizontalMouseUp,
                     );
                 };
             }
@@ -1569,7 +1569,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                         setScrollbarVisible(true);
                                         hoverEnterTimeoutRef.current = null;
                                     },
-                                    100
+                                    100,
                                 );
                             }}
                             onMouseLeave={() => {
@@ -1662,7 +1662,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                     width: `${finalThumbWidth}px`,
                                     height: `${Math.max(
                                         thumbHeight,
-                                        thumbMinHeight
+                                        thumbMinHeight,
                                     )}px`,
                                     backgroundColor:
                                         isThumbHovered || isDragging
@@ -1707,7 +1707,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             justifyContent: "center",
                             fontSize: `${Math.max(
                                 finalThumbWidth * 0.75,
-                                8
+                                8,
                             )}px`,
                             color:
                                 hoveredArrow === "up"
@@ -1754,7 +1754,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             justifyContent: "center",
                             fontSize: `${Math.max(
                                 finalThumbWidth * 0.75,
-                                8
+                                8,
                             )}px`,
                             color:
                                 hoveredArrow === "down"
@@ -1791,7 +1791,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                         setScrollbarVisible(true);
                                         hoverEnterTimeoutRef.current = null;
                                     },
-                                    100
+                                    100,
                                 );
                             }}
                             onMouseLeave={() => {
@@ -1922,7 +1922,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     )}
             </div>
         );
-    }
+    },
 );
 
 export default OverlayScrollbar;

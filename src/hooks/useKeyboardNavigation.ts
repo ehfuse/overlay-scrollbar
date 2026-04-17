@@ -59,7 +59,7 @@ export const useKeyboardNavigation = ({
                     event.preventDefault();
                     newScrollTop = Math.min(
                         maxScrollTop,
-                        scrollTop + lineScrollStep
+                        scrollTop + lineScrollStep,
                     );
                     break;
                 case "PageUp":
@@ -70,7 +70,7 @@ export const useKeyboardNavigation = ({
                     event.preventDefault();
                     newScrollTop = Math.min(
                         maxScrollTop,
-                        scrollTop + clientHeight
+                        scrollTop + clientHeight,
                     );
                     break;
                 case "Home":
