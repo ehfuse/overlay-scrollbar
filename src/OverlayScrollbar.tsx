@@ -1171,6 +1171,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 키보드 네비게이션 핸들러 (방향키, PageUp/PageDown/Home/End)
         useEffect(() => {
             const handleKeyDown = (event: KeyboardEvent) => {
+                const target = event.target;
+                if (event.defaultPrevented) {
+                    return;
+                }
+
+                if (target instanceof Element && isTextInputElement(target)) {
+                    return;
+                }
+
                 const scrollableElement = findScrollableElement();
                 if (!scrollableElement) return;
 

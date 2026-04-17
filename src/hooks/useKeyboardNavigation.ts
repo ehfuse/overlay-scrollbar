@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from "react";
+import { isTextInputElement } from "../utils/dragScrollUtils";
 
 interface UseKeyboardNavigationProps {
     containerRef: React.RefObject<HTMLDivElement>;
@@ -28,19 +29,13 @@ export const useKeyboardNavigation = ({
 }: UseKeyboardNavigationProps) => {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            // 입력 가능한 요소에 포커스가 있으면 키보드 스크롤 비활성화
-            const target = event.target as HTMLElement;
-            if (
-                target.tagName === "INPUT" ||
-                target.tagName === "TEXTAREA" ||
-                target.tagName === "SELECT" ||
-                target.isContentEditable ||
-                target.getAttribute("role") === "textbox" ||
-                target.classList.contains("MuiInputBase-input") || // Material-UI TextField
-                target.closest(".MuiTextField-root") || // Material-UI TextField 컨테이너
-                target.closest('[contenteditable="true"]') // contenteditable 요소
-            ) {
-                return; // 입력 필드에서는 키보드 스크롤을 하지 않음
+            const target = event.target;
+            if (event.defaultPrevented) {
+                return;
+            }
+
+            if (target instanceof Element && isTextInputElement(target)) {
+                return;
             }
 
             const scrollableElement = findScrollableElement();
