@@ -12,7 +12,6 @@
         "allowSyntheticDefaultImports": true,
         "strict": true,
         "forceConsistentCasingInFileNames": true,
-        "module": "ESNext",
         "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "isolatedModules": true,
@@ -20,7 +19,7 @@
         "jsx": "react-jsx",
         "declaration": true,
         "declarationMap": true,
-        "rootDir": ".",
+        "rootDir": "./src",
         "outDir": "dist",
         "sourceMap": true
     },

@@ -203,7 +203,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         ] = useState(false);
 
         // 드래그 스크롤 상태
-        const [isDragScrollPending, setIsDragScrollPending] = useState(false);
+        const isDragScrollPendingRef = useRef(false);
         const [isDragScrolling, setIsDragScrolling] = useState(false);
         const [dragScrollStart, setDragScrollStart] = useState({
             x: 0,
@@ -225,17 +225,25 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const [wrapperPaddingBottom, setWrapperPaddingBottom] = useState(0);
 
         // 휠 스크롤 감지용
-        const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        const wheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+            null,
+        );
         const [isWheelScrolling, setIsWheelScrolling] = useState(false);
 
         // 숨김 타이머
-        const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+            null,
+        );
 
         // 호버 진입 타이머 (디바운스용)
-        const hoverEnterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        const hoverEnterTimeoutRef = useRef<ReturnType<
+            typeof setTimeout
+        > | null>(null);
 
         // 휠 이벤트 표시 타이머 (디바운스용)
-        const wheelShowTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        const wheelShowTimeoutRef = useRef<ReturnType<
+            typeof setTimeout
+        > | null>(null);
 
         // 그룹화된 설정 객체들에 기본값 설정
         const finalThumbConfig = useMemo(() => {
@@ -474,7 +482,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 isDragging ||
                 isDraggingHorizontal ||
                 isDragScrolling ||
-                isDragScrollPending
+                isDragScrollPendingRef.current
             ) {
                 return;
             }
@@ -487,7 +495,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             isDragging,
             isDraggingHorizontal,
             isDragScrolling,
-            isDragScrollPending,
         ]);
 
         // 스크롤바 숨기기 타이머
@@ -938,7 +945,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     return;
 
                 event.preventDefault();
-                setIsDragScrollPending(true);
+                isDragScrollPendingRef.current = true;
                 setDragScrollStart({
                     x: event.clientX,
                     y: event.clientY,
@@ -960,7 +967,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 드래그 스크롤 중
         const handleDragScrollMove = useCallback(
             (event: MouseEvent) => {
-                if (!isDragScrollPending && !isDragScrolling) return;
+                if (!isDragScrollPendingRef.current && !isDragScrolling) return;
 
                 const scrollableElement = findScrollableElement();
                 if (!scrollableElement) return;
@@ -973,8 +980,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     return;
                 }
 
-                if (isDragScrollPending) {
-                    setIsDragScrollPending(false);
+                if (isDragScrollPendingRef.current) {
+                    isDragScrollPendingRef.current = false;
                     setIsDragScrolling(true);
                 }
 
@@ -1006,7 +1013,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
             },
             [
-                isDragScrollPending,
                 isDragScrolling,
                 dragScrollStart,
                 findScrollableElement,
@@ -1017,7 +1023,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 드래그 스크롤 종료
         const handleDragScrollEnd = useCallback(() => {
             const wasDragScrolling = isDragScrolling;
-            setIsDragScrollPending(false);
+            isDragScrollPendingRef.current = false;
             setIsDragScrolling(false);
 
             if (wasDragScrolling && isScrollable()) {
@@ -1270,26 +1276,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 드래그 스크롤 전역 마우스 이벤트 리스너
         useEffect(() => {
-            if (isDragScrollPending || isDragScrolling) {
-                document.addEventListener("mousemove", handleDragScrollMove);
-                document.addEventListener("mouseup", handleDragScrollEnd);
-                return () => {
-                    document.removeEventListener(
-                        "mousemove",
-                        handleDragScrollMove,
-                    );
-                    document.removeEventListener(
-                        "mouseup",
-                        handleDragScrollEnd,
-                    );
-                };
-            }
-        }, [
-            isDragScrollPending,
-            isDragScrolling,
-            handleDragScrollMove,
-            handleDragScrollEnd,
-        ]);
+            document.addEventListener("mousemove", handleDragScrollMove);
+            document.addEventListener("mouseup", handleDragScrollEnd);
+            return () => {
+                document.removeEventListener("mousemove", handleDragScrollMove);
+                document.removeEventListener("mouseup", handleDragScrollEnd);
+            };
+        }, [isDragScrolling, handleDragScrollMove, handleDragScrollEnd]);
 
         // 전역 마우스 이벤트 리스너
         useEffect(() => {
@@ -1478,14 +1471,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar-thumb:hover {
                     background: #a1a1a1 !important;
                 }
-                .overlay-scrollbar-container:focus {
-                    outline: 2px solid rgba(0, 123, 255, 0.3);
-                    outline-offset: -2px;
-                }
-                .overlay-scrollbar-container:focus-visible {
-                    outline: 2px solid rgba(0, 123, 255, 0.5);
-                    outline-offset: -2px;
-                }
             `;
             document.head.appendChild(style);
 
@@ -1530,10 +1515,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         msOverflowStyle: "none", // IE/Edge
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
-                        userSelect:
-                            isDragScrollPending || isDragScrolling
-                                ? "none"
-                                : "auto", // 드래그 중 텍스트 선택 방지
+                        userSelect: isDragScrolling ? "none" : "auto", // 실제 드래그 중 텍스트 선택 방지
                         ...containerStyle, // 사용자 정의 스타일 적용
                     }}
                 >

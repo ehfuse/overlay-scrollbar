@@ -129,14 +129,6 @@ export const useScrollbarInitialization = ({
             .overlay-scrollbar-container::-webkit-scrollbar-thumb {
                 display: none !important;
             }
-            .overlay-scrollbar-container:focus {
-                outline: 2px solid rgba(0, 123, 255, 0.3);
-                outline-offset: -2px;
-            }
-            .overlay-scrollbar-container:focus-visible {
-                outline: 2px solid rgba(0, 123, 255, 0.5);
-                outline-offset: -2px;
-            }
         `;
         document.head.appendChild(style);
 
