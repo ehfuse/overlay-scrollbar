@@ -1182,7 +1182,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     return;
                 }
 
-                if (target instanceof Element && isTextInputElement(target)) {
+                if (
+                    target instanceof Element &&
+                    isTextInputElement(target, finalDragScrollConfig)
+                ) {
                     return;
                 }
 
@@ -1272,6 +1275,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             clearHideTimer,
             setHideTimer,
             finalAutoHideConfig.delay,
+            finalDragScrollConfig,
         ]);
 
         // 드래그 스크롤 전역 마우스 이벤트 리스너

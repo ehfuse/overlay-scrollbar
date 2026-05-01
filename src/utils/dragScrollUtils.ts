@@ -231,23 +231,31 @@ export const isTextInputElement = (
     element: Element,
     config?: DragScrollConfig
 ): boolean => {
-    const tagName = element.tagName.toLowerCase();
-    const inputTypes = [
-        "text",
-        "password",
-        "email",
-        "number",
-        "search",
-        "tel",
-        "url",
-        "checkbox",
-        "radio",
-    ];
+    // 상속된 contenteditable(자식만 편집 가능한 에디터 등) — getAttribute만으로는 놓침
+    if (element instanceof HTMLElement && element.isContentEditable) {
+        return true;
+    }
 
-    // input 태그이면서 텍스트 입력 타입이나 체크박스/라디오인 경우
+    // 네이티브 input/textarea가 아닌 ARIA 텍스트 입력
+    if (element.closest('[role="textbox"],[role="searchbox"]')) {
+        return true;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+    // 스크롤 전용 키(Home/End 등)를 브라우저에 맡겨야 하는 입력만 제외.
+    // 예전에는 일부 type만 허용해 date 등에서 스크롤 가로채기가 발생할 수 있었음.
     if (tagName === "input") {
-        const type = (element as HTMLInputElement).type;
-        return inputTypes.includes(type);
+        const type = (
+            (element as HTMLInputElement).type || "text"
+        ).toLowerCase();
+        const typesWithoutCaretLikeKeyboardBehavior = [
+            "button",
+            "submit",
+            "reset",
+            "image",
+            "hidden",
+        ];
+        return !typesWithoutCaretLikeKeyboardBehavior.includes(type);
     }
 
     // textarea, select, 편집 가능한 요소들
