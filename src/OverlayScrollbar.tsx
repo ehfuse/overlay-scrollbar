@@ -524,9 +524,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 스크롤바 위치 및 크기 업데이트
         const updateScrollbar = useCallback(() => {
-            const scrollableElement = findScrollableElement();
+            // 우선 감지 로직을 사용하고, 실패 시 container를 fallback으로 사용한다.
+            // horizontal-only 케이스에서 감지 타이밍 이슈가 발생해도 가로 오버플로우 계산을 유지한다.
+            const scrollableElement =
+                findScrollableElement() ?? containerRef.current;
             if (!scrollableElement) {
-                // 스크롤 불가능하면 숨김
+                // 측정 대상이 없으면 숨김
                 setScrollbarVisible(false);
                 setHasScrollableContent(false);
                 setHasHorizontalScrollableContent(false);
@@ -549,10 +552,17 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const scrollLeft = scrollableElement.scrollLeft;
             const hasVerticalOverflow = contentHeight - containerHeight > 0;
             const hasHorizontalOverflow = contentWidth - containerWidth > 0;
+            const hasAnyOverflow = hasVerticalOverflow || hasHorizontalOverflow;
 
             // 축별 오버플로우 상태 반영
             setHasScrollableContent(hasVerticalOverflow);
             setHasHorizontalScrollableContent(hasHorizontalOverflow);
+
+            // 오버플로우가 없으면 스크롤바를 숨긴다.
+            if (!hasAnyOverflow) {
+                setScrollbarVisible(false);
+                clearHideTimer();
+            }
 
             // wrapper의 패딩 계산 (상하 패딩만 필요)
             let wrapperPaddingTopBottom = 0;
