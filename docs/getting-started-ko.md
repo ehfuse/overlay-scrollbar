@@ -410,6 +410,7 @@ const MyComponent: React.FC = () => {
 | `dragScroll`     | `DragScrollConfig`       | `{}`   | 드래그 스크롤 설정 객체    |
 | `autoHide`       | `AutoHideConfig`         | `{}`   | 자동 숨김 설정 객체        |
 | `showScrollbar`  | `boolean`                | `true` | 스크롤바 표시 여부         |
+| `showHorizontalScrollbar` | `boolean`       | `true` | 하단(가로) 스크롤바 표시 여부 |
 
 ### 설정 객체 속성
 
@@ -482,6 +483,7 @@ interface OverlayScrollbarProps {
 
     // 기타 설정
     showScrollbar?: boolean; // 기본값: true
+    showHorizontalScrollbar?: boolean; // 기본값: true (하단 가로 스크롤바)
 }
 
 interface ThumbConfig {

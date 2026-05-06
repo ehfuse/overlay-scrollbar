@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import OverlayScrollbar from "@/OverlayScrollbar";
 import type { OverlayScrollbarRef } from "@/types";
 
@@ -241,6 +241,121 @@ const HorizontalVerticalTest = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </OverlayScrollbar>
+                </div>
+            </div>
+
+            {/* Horizontal-only overflow 예제 */}
+            <div style={{ marginTop: "40px" }}>
+                <h3>Horizontal-only Overflow Test</h3>
+                <p
+                    style={{
+                        color: "#666",
+                        fontSize: "14px",
+                        marginBottom: "20px",
+                    }}
+                >
+                    세로 스크롤 없이 가로로만 넘치는 카드 레이아웃입니다. 하단
+                    오버레이 스크롤바가 표시되어야 합니다.
+                </p>
+
+                <div
+                    style={{
+                        width: "1000px",
+                        height: "220px",
+                        border: "2px solid #333",
+                        margin: "20px",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                >
+                    <OverlayScrollbar
+                        thumb={{
+                            width: 8,
+                            color: "#9b59b6",
+                            opacity: 0.65,
+                            hoverColor: "#8e44ad",
+                            hoverOpacity: 1.0,
+                            radius: 6,
+                        }}
+                        track={{
+                            width: 14,
+                            alignment: "outside",
+                            color: "rgba(155, 89, 182, 0.15)",
+                            radius: 6,
+                            margin: 4,
+                            overflowX: true,
+                            overflowY: false,
+                        }}
+                        autoHide={{
+                            enabled: false,
+                            initialDelay: 0,
+                        }}
+                        containerStyle={{
+                            boxSizing: "border-box",
+                            width: "100%",
+                            maxWidth: "100%",
+                            minWidth: 0,
+                            overflowX: "auto",
+                            overflowY: "hidden",
+                        }}
+                        contentStyle={{
+                            boxSizing: "border-box",
+                            display: "inline-flex",
+                            width: "max-content",
+                            minWidth: "max-content",
+                            padding: "12px 0 18px 0",
+                            alignItems: "stretch",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "inline-flex",
+                                minWidth: "max-content",
+                                gap: "16px",
+                                padding: "0 16px",
+                            }}
+                        >
+                            {Array.from({ length: 14 }, (_, i) => (
+                                <div
+                                    key={`horizontal-card-${i}`}
+                                    style={{
+                                        width: "180px",
+                                        minWidth: "180px",
+                                        height: "150px",
+                                        borderRadius: "10px",
+                                        border: "1px solid #d7bde2",
+                                        background:
+                                            "linear-gradient(135deg, #f5eef8, #ebdef0)",
+                                        boxSizing: "border-box",
+                                        padding: "12px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            fontWeight: 700,
+                                            color: "#5b2c6f",
+                                            fontSize: "14px",
+                                        }}
+                                    >
+                                        Card {i + 1}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color: "#6c3483",
+                                            fontSize: "12px",
+                                            lineHeight: 1.4,
+                                        }}
+                                    >
+                                        Horizontal overflow verification
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </OverlayScrollbar>
                 </div>
             </div>

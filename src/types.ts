@@ -71,6 +71,7 @@ export interface OverlayScrollbarProps {
 
     // 기타 설정들
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
+    showHorizontalScrollbar?: boolean; // 하단(가로) 스크롤바 표시 여부 (기본값: true)
     detectInnerScroll?: boolean; // children 내부의 스크롤 요소 감지 여부 (기본값: false, 가상 테이블 등에 사용)
 }
 

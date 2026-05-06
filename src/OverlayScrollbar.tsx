@@ -100,6 +100,7 @@ export interface OverlayScrollbarProps {
 
     // 기타 설정들
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
+    showHorizontalScrollbar?: boolean; // 하단(가로) 스크롤바 표시 여부 (기본값: true)
     detectInnerScroll?: boolean; // children 내부의 스크롤 요소 감지 여부 (기본값: false, 가상 테이블 등에 사용)
 }
 
@@ -138,6 +139,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             // 기타 설정들
             showScrollbar = true,
+            showHorizontalScrollbar = true,
             detectInnerScroll = false,
         },
         ref,
@@ -147,6 +149,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             children?: ReactNode;
             onScroll?: (event: Event) => void;
             showScrollbar?: boolean;
+            showHorizontalScrollbar?: boolean;
             thumb?: ThumbConfig;
             track?: TrackConfig;
             arrows?: ArrowsConfig;
@@ -161,6 +164,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 children,
                 onScroll,
                 showScrollbar,
+                showHorizontalScrollbar,
                 thumb,
                 track,
                 arrows,
@@ -367,7 +371,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // DOM에 연결되어 있고 여전히 스크롤 가능한지 확인
                 if (
                     document.contains(cached) &&
-                    cached.scrollHeight > cached.clientHeight + 2
+                    (cached.scrollHeight > cached.clientHeight + 2 ||
+                        cached.scrollWidth > cached.clientWidth + 2)
                 ) {
                     return cached;
                 }
@@ -381,9 +386,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             // 내부 컨테이너의 스크롤 가능 여부 확인
             if (
-                contentRef.current &&
-                contentRef.current.scrollHeight >
-                    containerRef.current.clientHeight + 2
+                containerRef.current.scrollHeight >
+                    containerRef.current.clientHeight + 2 ||
+                containerRef.current.scrollWidth >
+                    containerRef.current.clientWidth + 2
             ) {
                 cachedScrollContainerRef.current = containerRef.current;
                 return containerRef.current;
@@ -438,7 +444,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 }
 
                 // 스크롤 가능한 요소인지 확인
-                if (element.scrollHeight > element.clientHeight + 2) {
+                if (
+                    element.scrollHeight > element.clientHeight + 2 ||
+                    element.scrollWidth > element.clientWidth + 2
+                ) {
                     cachedScrollContainerRef.current = element;
                     return element;
                 }
@@ -525,11 +534,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 return;
             }
 
-            // 스크롤 가능한 콘텐츠가 있음을 표시
-            setHasScrollableContent(true);
-
-            if (!scrollbarRef.current) return;
-
             // 자동 숨김이 비활성화되어 있고 초기 지연이 끝났으면 스크롤바를 항상 표시
             if (!finalAutoHideConfig.enabled && !isInitialDelayActive) {
                 setScrollbarVisible(true);
@@ -543,6 +547,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const containerWidth = scrollableElement.clientWidth;
             const contentWidth = scrollableElement.scrollWidth;
             const scrollLeft = scrollableElement.scrollLeft;
+            const hasVerticalOverflow = contentHeight - containerHeight > 0;
+            const hasHorizontalOverflow = contentWidth - containerWidth > 0;
+
+            // 축별 오버플로우 상태 반영
+            setHasScrollableContent(hasVerticalOverflow);
+            setHasHorizontalScrollableContent(hasHorizontalOverflow);
 
             // wrapper의 패딩 계산 (상하 패딩만 필요)
             let wrapperPaddingTopBottom = 0;
@@ -557,37 +567,40 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setWrapperPaddingBottom(paddingBottom);
             }
 
-            // 화살표와 간격 공간 계산 (화살표 + 위아래 마진, 화살표 없어도 위아래 마진)
-            const arrowSpace = showArrows
-                ? finalThumbWidth * 2 + finalTrackConfig.margin * 4
-                : finalTrackConfig.margin * 2;
+            if (hasVerticalOverflow) {
+                // 화살표와 간격 공간 계산 (화살표 + 위아래 마진, 화살표 없어도 위아래 마진)
+                const arrowSpace = showArrows
+                    ? finalThumbWidth * 2 + finalTrackConfig.margin * 4
+                    : finalTrackConfig.margin * 2;
 
-            // 썸 높이 계산 (사용자 설정 최소 높이 사용, 화살표 공간 제외, wrapper 패딩 추가)
-            const availableHeight =
-                containerHeight - arrowSpace + wrapperPaddingTopBottom;
-            const scrollRatio = containerHeight / contentHeight;
-            const calculatedThumbHeight = Math.max(
-                availableHeight * scrollRatio,
-                thumbMinHeight,
-            );
+                // 썸 높이 계산 (사용자 설정 최소 높이 사용, 화살표 공간 제외, wrapper 패딩 추가)
+                const availableHeight =
+                    containerHeight - arrowSpace + wrapperPaddingTopBottom;
+                const scrollRatio = containerHeight / contentHeight;
+                const calculatedThumbHeight = Math.max(
+                    availableHeight * scrollRatio,
+                    thumbMinHeight,
+                );
 
-            // 썸 위치 계산 (화살표와 간격 공간 제외)
-            const scrollableHeight = contentHeight - containerHeight;
-            const thumbScrollableHeight =
-                availableHeight - calculatedThumbHeight;
-            const calculatedThumbTop =
-                scrollableHeight > 0
-                    ? (scrollTop / scrollableHeight) * thumbScrollableHeight
-                    : 0;
+                // 썸 위치 계산 (화살표와 간격 공간 제외)
+                const scrollableHeight = contentHeight - containerHeight;
+                const thumbScrollableHeight =
+                    availableHeight - calculatedThumbHeight;
+                const calculatedThumbTop =
+                    scrollableHeight > 0
+                        ? (scrollTop / scrollableHeight) * thumbScrollableHeight
+                        : 0;
 
-            setThumbHeight(calculatedThumbHeight);
-            setThumbTop(calculatedThumbTop);
+                setThumbHeight(calculatedThumbHeight);
+                setThumbTop(calculatedThumbTop);
+            } else {
+                setThumbHeight(0);
+                setThumbTop(0);
+            }
 
             // 가로 스크롤바 계산
             const horizontalScrollableWidth = contentWidth - containerWidth;
             if (horizontalScrollableWidth > 0) {
-                setHasHorizontalScrollableContent(true);
-
                 const scrollRatioHorizontal = containerWidth / contentWidth;
                 const calculatedThumbWidth = Math.max(
                     containerWidth * scrollRatioHorizontal,
@@ -605,7 +618,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 setThumbWidth(calculatedThumbWidth);
                 setThumbLeft(calculatedThumbLeft);
             } else {
-                setHasHorizontalScrollableContent(false);
+                setThumbWidth(0);
+                setThumbLeft(0);
             }
         }, [
             findScrollableElement,
@@ -1763,6 +1777,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 {/* 가로 커스텀 스크롤바 */}
                 {showScrollbar &&
+                    showHorizontalScrollbar &&
                     hasHorizontalScrollableContent &&
                     (finalTrackConfig.overflowX ?? true) && (
                         <div

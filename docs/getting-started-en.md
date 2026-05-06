@@ -413,6 +413,7 @@ The component provides three style props for different layers:
 | `dragScroll`     | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
 | `autoHide`       | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
 | `showScrollbar`  | `boolean`                | `true`  | Show scrollbar              |
+| `showHorizontalScrollbar` | `boolean`       | `true`  | Show bottom horizontal scrollbar |
 
 ### Configuration Object Properties
 
@@ -484,6 +485,7 @@ interface OverlayScrollbarProps {
 
     // Other settings
     showScrollbar?: boolean; // default: true
+    showHorizontalScrollbar?: boolean; // default: true (bottom horizontal scrollbar)
 }
 
 interface ThumbConfig {

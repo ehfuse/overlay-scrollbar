@@ -94,6 +94,7 @@ interface OverlayScrollbarProps {
 
     // General settings
     showScrollbar?: boolean; // Show scrollbar (default: true)
+    showHorizontalScrollbar?: boolean; // Show bottom horizontal scrollbar (default: true)
 }
 
 interface AutoHideConfig {
