@@ -1522,7 +1522,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     minHeight: 0, // shrink 가능하도록
                     height: "100%", // 부모의 전체 높이 사용
                     flex: "1 1 0%", // 기본적으로 flex item으로 동작
-                    overflow: "hidden", // 네이티브 스크롤바 완전 숨김
+                    overflow: "visible", // content 그림자와 outside track이 상위 wrapper에서 잘리지 않도록 허용
                     ...style, // 사용자가 flex를 override 할 수 있도록 style을 뒤에 배치
                 }}
             >
@@ -1555,6 +1555,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             minHeight: 0, // flex shrink 허용
                             display: "flex", // flex 컨테이너로 설정
                             flexDirection: "column", // 세로 방향 정렬
+                            boxSizing: "border-box",
                             ...contentStyle, // 사용자 정의 스타일 적용
                         }}
                     >
