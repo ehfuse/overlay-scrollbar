@@ -51,11 +51,11 @@ function App() {
 
 ### Core Concepts
 
--   **True Overlay**: Floats above content without affecting layout
--   **Smart Auto-Hide**: Intelligent show/hide based on scroll state
--   **Hover Display**: Appears immediately when hovering over track area
--   **Smooth Animations**: Fade effects for all state changes
--   **Auto-Detection**: Automatically finds and tracks scrollable containers (Virtuoso, custom implementations, etc.)
+- **True Overlay**: Floats above content without affecting layout
+- **Smart Auto-Hide**: Intelligent show/hide based on scroll state
+- **Hover Display**: Appears immediately when hovering over track area
+- **Smooth Animations**: Fade effects for all state changes
+- **Auto-Detection**: Automatically finds and tracks scrollable containers (Virtuoso, custom implementations, etc.)
 
 ## Configuration Object (v1.3.0+)
 
@@ -78,7 +78,7 @@ Starting from v1.3.0, related settings are grouped into objects for a cleaner AP
     track={{
         width: 16,
         color: "rgba(128, 128, 128, 0.1)",
-        alignment: "default",
+        alignment: "outside",
         radius: 4,
         margin: 4,
     }}
@@ -399,21 +399,21 @@ The component provides three style props for different layers:
 
 ### Props
 
-| Property         | Type                     | Default | Description                 |
-| ---------------- | ------------------------ | ------- | --------------------------- |
-| `children`       | `ReactNode`              | -       | Content to scroll           |
-| `className`      | `string`                 | -       | Additional CSS class        |
-| `style`          | `React.CSSProperties`    | -       | Wrapper div styles          |
-| `containerStyle` | `React.CSSProperties`    | -       | Scroll container div styles |
-| `contentStyle`   | `React.CSSProperties`    | -       | Inner content div styles    |
-| `onScroll`       | `(event: Event) => void` | -       | Scroll event callback       |
-| `thumb`          | `ThumbConfig`            | `{}`    | Thumb configuration object  |
-| `track`          | `TrackConfig`            | `{}`    | Track configuration object  |
-| `arrows`         | `ArrowsConfig`           | `{}`    | Arrows configuration object |
-| `dragScroll`     | `DragScrollConfig`       | `{}`    | Drag scroll configuration   |
-| `autoHide`       | `AutoHideConfig`         | `{}`    | Auto-hide configuration     |
-| `showScrollbar`  | `boolean`                | `true`  | Show scrollbar              |
-| `showHorizontalScrollbar` | `boolean`       | `true`  | Show bottom horizontal scrollbar |
+| Property                  | Type                     | Default | Description                      |
+| ------------------------- | ------------------------ | ------- | -------------------------------- |
+| `children`                | `ReactNode`              | -       | Content to scroll                |
+| `className`               | `string`                 | -       | Additional CSS class             |
+| `style`                   | `React.CSSProperties`    | -       | Wrapper div styles               |
+| `containerStyle`          | `React.CSSProperties`    | -       | Scroll container div styles      |
+| `contentStyle`            | `React.CSSProperties`    | -       | Inner content div styles         |
+| `onScroll`                | `(event: Event) => void` | -       | Scroll event callback            |
+| `thumb`                   | `ThumbConfig`            | `{}`    | Thumb configuration object       |
+| `track`                   | `TrackConfig`            | `{}`    | Track configuration object       |
+| `arrows`                  | `ArrowsConfig`           | `{}`    | Arrows configuration object      |
+| `dragScroll`              | `DragScrollConfig`       | `{}`    | Drag scroll configuration        |
+| `autoHide`                | `AutoHideConfig`         | `{}`    | Auto-hide configuration          |
+| `showScrollbar`           | `boolean`                | `true`  | Show scrollbar                   |
+| `showHorizontalScrollbar` | `boolean`                | `true`  | Show bottom horizontal scrollbar |
 
 ### Configuration Object Properties
 
@@ -502,7 +502,7 @@ interface TrackConfig {
     width?: number; // default: 16px
     color?: string; // default: "rgba(128, 128, 128, 0.1)"
     visible?: boolean; // default: true
-    alignment?: "default" | "outside"; // default: "default" (center), "outside" (edge)
+    alignment?: "default" | "outside"; // default: "outside" (edge), "default" renders inside content
     radius?: number; // default: thumb.radius or 4px
     margin?: number; // default: 4px
     overflowX?: boolean; // default: true
@@ -583,10 +583,10 @@ A: On mobile, touch scroll is prioritized and the overlay scrollbar is automatic
 
 ## Browser Support
 
--   **Chrome/Edge**: Full support
--   **Firefox**: Full support
--   **Safari**: Full support
--   **Mobile**: Touch scroll support, overlay scrollbar hidden
+- **Chrome/Edge**: Full support
+- **Firefox**: Full support
+- **Safari**: Full support
+- **Mobile**: Touch scroll support, overlay scrollbar hidden
 
 ## License
 

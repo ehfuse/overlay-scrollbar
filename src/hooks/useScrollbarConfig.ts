@@ -49,11 +49,11 @@ export const useScrollbarConfig = ({
             width: track.width ?? 16,
             color: track.color ?? "rgba(128, 128, 128, 0.1)",
             visible: track.visible ?? true,
-            alignment: track.alignment ?? "default",
+            alignment: track.alignment ?? "outside",
             radius: track.radius ?? finalThumbConfig.radius ?? 4,
             margin: track.margin ?? 4,
         }),
-        [track, finalThumbConfig.radius]
+        [track, finalThumbConfig.radius],
     );
 
     // Arrows 설정
@@ -76,7 +76,7 @@ export const useScrollbarConfig = ({
             excludeClasses: dragScroll.excludeClasses ?? [],
             excludeSelectors: dragScroll.excludeSelectors ?? [],
         }),
-        [dragScroll]
+        [dragScroll],
     );
 
     // AutoHide 설정
@@ -86,7 +86,7 @@ export const useScrollbarConfig = ({
             delay: autoHide.delay ?? 1500,
             delayOnWheel: autoHide.delayOnWheel ?? 700,
         }),
-        [autoHide]
+        [autoHide],
     );
 
     return {

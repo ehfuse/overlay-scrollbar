@@ -6,34 +6,34 @@ A highly customizable React component that provides a beautiful overlay scrollba
 
 ## 📚 Documentation
 
--   **[Getting Started (English)](https://github.com/ehfuse/overlay-scrollbar/blob/main/docs/getting-started-en.md)** - Complete setup and usage guide
--   **[시작하기 (한국어)](https://github.com/ehfuse/overlay-scrollbar/blob/main/docs/getting-started-ko.md)** - 설치 및 사용법 가이드
+- **[Getting Started (English)](https://github.com/ehfuse/overlay-scrollbar/blob/main/docs/getting-started-en.md)** - Complete setup and usage guide
+- **[시작하기 (한국어)](https://github.com/ehfuse/overlay-scrollbar/blob/main/docs/getting-started-ko.md)** - 설치 및 사용법 가이드
 
 ## ✨ Key Features
 
--   🎨 **Fully Customizable** - Control colors, sizes, radius, and positioning
--   🖱️ **Drag Scroll** - Mouse drag scrolling with smart UI library exclusion
--   🏹 **Arrow Navigation** - Optional arrow buttons for precise control
--   ⚡ **Smooth Animations** - Fade transitions and hover effects
--   🔍 **Smart Auto-hide** - Intelligent visibility management
--   🧠 **Smart Input Detection** - Excludes interactive elements automatically
--   🤖 **Auto-Detection** - Automatically finds scrollable containers (Virtuoso, react-window, etc.)
--   🔧 **TypeScript** - Complete type definitions
--   🪶 **Zero Dependencies** - Only requires React
--   ♿ **Accessible** - Preserves native scroll behavior
+- 🎨 **Fully Customizable** - Control colors, sizes, radius, and positioning
+- 🖱️ **Drag Scroll** - Mouse drag scrolling with smart UI library exclusion
+- 🏹 **Arrow Navigation** - Optional arrow buttons for precise control
+- ⚡ **Smooth Animations** - Fade transitions and hover effects
+- 🔍 **Smart Auto-hide** - Intelligent visibility management
+- 🧠 **Smart Input Detection** - Excludes interactive elements automatically
+- 🤖 **Auto-Detection** - Automatically finds scrollable containers (Virtuoso, react-window, etc.)
+- 🔧 **TypeScript** - Complete type definitions
+- 🪶 **Zero Dependencies** - Only requires React
+- ♿ **Accessible** - Preserves native scroll behavior
 
 ## ✨ 주요 기능
 
--   🎨 **완전한 커스터마이징** - 색상, 크기, 둥근 모서리, 위치 제어
--   🖱️ **드래그 스크롤** - UI 라이브러리 스마트 제외 기능을 가진 마우스 드래그 스크롤
--   🏹 **화살표 내비게이션** - 정밀한 제어를 위한 선택적 화살표 버튼
--   ⚡ **부드러운 애니메이션** - 페이드 전환 및 호버 효과
--   🔍 **스마트 자동 숨김** - 지능적인 표시 관리
--   🧠 **스마트 입력 감지** - 인터랙티브 요소 자동 제외
--   🤖 **자동 감지** - 스크롤 가능한 컨테이너 자동 검색 (Virtuoso, react-window 등)
--   🔧 **TypeScript** - 완전한 타입 정의
--   🪶 **의존성 없음** - React만 필요
--   ♿ **접근성** - 기본 스크롤 동작 보존
+- 🎨 **완전한 커스터마이징** - 색상, 크기, 둥근 모서리, 위치 제어
+- 🖱️ **드래그 스크롤** - UI 라이브러리 스마트 제외 기능을 가진 마우스 드래그 스크롤
+- 🏹 **화살표 내비게이션** - 정밀한 제어를 위한 선택적 화살표 버튼
+- ⚡ **부드러운 애니메이션** - 페이드 전환 및 호버 효과
+- 🔍 **스마트 자동 숨김** - 지능적인 표시 관리
+- 🧠 **스마트 입력 감지** - 인터랙티브 요소 자동 제외
+- 🤖 **자동 감지** - 스크롤 가능한 컨테이너 자동 검색 (Virtuoso, react-window 등)
+- 🔧 **TypeScript** - 완전한 타입 정의
+- 🪶 **의존성 없음** - React만 필요
+- ♿ **접근성** - 기본 스크롤 동작 보존
 
 ## 🚀 Installation
 
@@ -103,14 +103,24 @@ interface AutoHideConfig {
     delayOnWheel?: number; // Quick hide after wheel (default: 700ms)
     initialDelay?: number; // Delay before showing scrollbar on mount (default: 200ms)
 }
+
+interface TrackConfig {
+    alignment?: "default" | "outside"; // Track alignment (default: "outside")
+}
+
+interface DragScrollConfig {
+    enabled?: boolean; // Enable mouse drag scrolling (default: true)
+    excludeClasses?: string[];
+    excludeSelectors?: string[];
+}
 ```
 
 ## 🌍 Browser Support
 
--   Chrome/Edge: Full support
--   Firefox: Full support
--   Safari: Full support
--   Mobile: Touch scrolling supported
+- Chrome/Edge: Full support
+- Firefox: Full support
+- Safari: Full support
+- Mobile: Touch scrolling supported
 
 ## 📄 License
 

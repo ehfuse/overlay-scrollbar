@@ -22,7 +22,7 @@ export interface TrackConfig {
     width?: number; // 호버 영역인 트랙의 너비 (기본값: 16px)
     color?: string; // 트랙 배경 색상 (기본값: "rgba(128, 128, 128, 0.1)")
     visible?: boolean; // 트랙 배경 표시 여부 (기본값: true)
-    alignment?: "default" | "outside"; // 트랙 정렬 (기본값: "default", "outside"는 오른쪽/아래 끝에 붙음)
+    alignment?: "default" | "outside"; // 트랙 정렬 (기본값: "outside", "default"는 콘텐츠 안쪽에 표시)
     radius?: number; // 트랙 배경의 border-radius (기본값: thumb.radius 또는 4px)
     margin?: number; // 트랙 상하 마진 (기본값: 4px)
     overflowX?: boolean; // 가로 스크롤바 활성화 여부 (기본값: true)
