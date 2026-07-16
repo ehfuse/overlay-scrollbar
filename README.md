@@ -91,6 +91,7 @@ interface OverlayScrollbarProps {
     arrows?: ArrowsConfig; // Arrow buttons settings
     dragScroll?: DragScrollConfig; // Drag scroll settings
     autoHide?: AutoHideConfig; // Auto-hide behavior settings
+    pullToRefresh?: PullToRefreshConfig; // Pull-to-refresh settings (touch only, v1.7.0+)
 
     // General settings
     showScrollbar?: boolean; // Show scrollbar (default: true)
@@ -113,6 +114,34 @@ interface DragScrollConfig {
     excludeClasses?: string[];
     excludeSelectors?: string[];
 }
+
+interface PullToRefreshConfig {
+    enabled?: boolean; // Enable pull-to-refresh (default: true, requires onRefresh)
+    onRefresh?: () => void | Promise<void>; // Refresh callback — spinner stays until the Promise resolves
+    threshold?: number; // Pull distance to trigger refresh on release (default: 80px)
+    maxDistance?: number; // Max indicator travel distance (default: threshold * 2)
+    indicatorColor?: string; // Arrow/spinner color (default: "#1976d2")
+}
+```
+
+### Pull to Refresh (v1.7.0+)
+
+When the scroll container is at the top, pulling down (touch gesture) shows an
+indicator that follows the finger. Releasing past the threshold triggers `onRefresh`.
+
+```tsx
+<OverlayScrollbar
+    pullToRefresh={{
+        onRefresh: async () => {
+            await reloadList(); // spinner stays visible until this resolves
+        },
+        // enabled: false, // turn the gesture off without removing the prop
+    }}
+>
+    {items.map((item) => (
+        <ListItem key={item.id} {...item} />
+    ))}
+</OverlayScrollbar>
 ```
 
 ## 🌍 Browser Support

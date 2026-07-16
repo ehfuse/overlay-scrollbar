@@ -14,4 +14,5 @@ export type {
     ArrowsConfig,
     DragScrollConfig,
     AutoHideConfig,
+    PullToRefreshConfig,
 } from "./types";

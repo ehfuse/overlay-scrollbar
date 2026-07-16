@@ -54,6 +54,15 @@ export interface AutoHideConfig {
     initialDelay?: number; // 마운트 후 스크롤바 표시 지연 시간 (기본값: 200ms, 0보다 크면 초기 스크롤 시 스크롤바 숨김)
 }
 
+// 당겨서 새로고침 관련 설정
+export interface PullToRefreshConfig {
+    enabled?: boolean; // 당겨서 새로고침 활성화 여부 (기본값: true, onRefresh 가 있어야 동작)
+    onRefresh?: () => void | Promise<void>; // 새로고침 콜백 — Promise 를 반환하면 완료까지 스피너 유지
+    threshold?: number; // 놓았을 때 새로고침이 실행되는 임계 당김 거리 (기본값: 80px)
+    maxDistance?: number; // 인디케이터가 따라오는 최대 당김 거리 (기본값: threshold * 2)
+    indicatorColor?: string; // 인디케이터 화살표/스피너 색상 (기본값: "#1976d2")
+}
+
 export interface OverlayScrollbarProps {
     className?: string;
     style?: React.CSSProperties; // wrapper div에 적용할 스타일
@@ -68,6 +77,7 @@ export interface OverlayScrollbarProps {
     arrows?: ArrowsConfig; // 화살표들 관련 설정
     dragScroll?: DragScrollConfig; // 드래그 스크롤 관련 설정
     autoHide?: AutoHideConfig; // 자동 숨김 관련 설정
+    pullToRefresh?: PullToRefreshConfig; // 당겨서 새로고침 관련 설정(터치 전용)
 
     // 기타 설정들
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
@@ -90,3 +100,4 @@ export const DEFAULT_TRACK_CONFIG: TrackConfig = {};
 export const DEFAULT_ARROWS_CONFIG: ArrowsConfig = {};
 export const DEFAULT_DRAG_SCROLL_CONFIG: DragScrollConfig = {};
 export const DEFAULT_AUTO_HIDE_CONFIG: AutoHideConfig = {};
+export const DEFAULT_PULL_TO_REFRESH_CONFIG: PullToRefreshConfig = {};

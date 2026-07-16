@@ -34,6 +34,8 @@ import React, {
     useLayoutEffect,
 } from "react";
 import { isTextInputElement } from "./utils/dragScrollUtils";
+import { usePullToRefresh } from "./hooks/usePullToRefresh";
+import type { PullToRefreshConfig } from "./types";
 
 // thumb 관련 설정
 export interface ThumbConfig {
@@ -97,6 +99,7 @@ export interface OverlayScrollbarProps {
     arrows?: ArrowsConfig; // 화살표들 관련 설정
     dragScroll?: DragScrollConfig; // 드래그 스크롤 관련 설정
     autoHide?: AutoHideConfig; // 자동 숨김 관련 설정
+    pullToRefresh?: PullToRefreshConfig; // 당겨서 새로고침 관련 설정(터치 전용)
 
     // 기타 설정들
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
@@ -119,6 +122,7 @@ const DEFAULT_TRACK_CONFIG: TrackConfig = {};
 const DEFAULT_ARROWS_CONFIG: ArrowsConfig = {};
 const DEFAULT_DRAG_SCROLL_CONFIG: DragScrollConfig = {};
 const DEFAULT_AUTO_HIDE_CONFIG: AutoHideConfig = {};
+const DEFAULT_PULL_TO_REFRESH_CONFIG: PullToRefreshConfig = {};
 
 const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
     (
@@ -136,6 +140,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             arrows = DEFAULT_ARROWS_CONFIG,
             dragScroll = DEFAULT_DRAG_SCROLL_CONFIG,
             autoHide = DEFAULT_AUTO_HIDE_CONFIG,
+            pullToRefresh = DEFAULT_PULL_TO_REFRESH_CONFIG,
 
             // 기타 설정들
             showScrollbar = true,
@@ -181,6 +186,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 스크롤 컨테이너 캐싱용 ref (성능 최적화)
         const cachedScrollContainerRef = useRef<HTMLElement | null>(null);
+
+        // 당겨서 새로고침 — 컨테이너가 맨 위일 때 하향 터치 당김을 감지해 onRefresh 를 실행한다.
+        const {
+            pullDistance,
+            isRefreshing,
+            pullProgress,
+        } = usePullToRefresh({ containerRef, config: pullToRefresh });
+        const pullIndicatorColor = pullToRefresh.indicatorColor ?? "#1976d2";
+        const pullIndicatorVisible = pullDistance > 0 || isRefreshing;
 
         // 기본 상태들
         const [scrollbarVisible, setScrollbarVisible] = useState(false);
@@ -1499,6 +1513,11 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 .overlay-scrollbar-container .ehfuse-editor-content::-webkit-scrollbar-thumb:hover {
                     background: #a1a1a1 !important;
                 }
+                /* 당겨서 새로고침 스피너 회전 */
+                @keyframes overlay-scrollbar-ptr-spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
             `;
             document.head.appendChild(style);
 
@@ -1526,6 +1545,76 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     ...style, // 사용자가 flex를 override 할 수 있도록 style을 뒤에 배치
                 }}
             >
+                {/* 당겨서 새로고침 인디케이터 — 당김 거리를 따라 내려오고, 실행 중엔 스피너로 회전 */}
+                {pullIndicatorVisible && (
+                    <div
+                        className="overlay-scrollbar-pull-indicator"
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: "50%",
+                            transform: `translate(-50%, ${pullDistance - 44}px)`,
+                            transition: isRefreshing
+                                ? "transform 0.15s ease-out"
+                                : pullDistance === 0
+                                  ? "transform 0.2s ease-out"
+                                  : "none",
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            background: "#ffffff",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 1001,
+                            pointerEvents: "none",
+                            opacity: isRefreshing ? 1 : Math.min(pullProgress * 1.5, 1),
+                        }}
+                    >
+                        {isRefreshing ? (
+                            // 새로고침 실행 중 — 스피너
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                style={{
+                                    animation:
+                                        "overlay-scrollbar-ptr-spin 0.8s linear infinite",
+                                }}
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    fill="none"
+                                    stroke={pullIndicatorColor}
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeDasharray="42"
+                                    strokeDashoffset="14"
+                                />
+                            </svg>
+                        ) : (
+                            // 당기는 중 — 진행률에 따라 회전하는 새로고침 화살표
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                style={{
+                                    transform: `rotate(${pullProgress * 270}deg)`,
+                                    opacity: pullProgress >= 1 ? 1 : 0.6,
+                                }}
+                            >
+                                <path
+                                    d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                    fill={pullIndicatorColor}
+                                />
+                            </svg>
+                        )}
+                    </div>
+                )}
+
                 {/* 스크롤 컨테이너 */}
                 <div
                     ref={containerRef}
