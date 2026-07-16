@@ -54,12 +54,30 @@ export const usePullToRefresh = ({
         const active = enabled && typeof onRefresh === "function";
         if (!container || !active) return;
 
+        /** 터치 지점부터 컨테이너까지의 스크롤 가능한 조상들이 전부 맨 위인지 확인한다.
+         *  (내부 목록 스크롤러가 스크롤된 상태에서 당김이 오발동하지 않게 한다) */
+        const isTouchPathAtTop = (target: EventTarget | null): boolean => {
+            let el = target instanceof Element ? target : null;
+            while (el && el !== container) {
+                if (
+                    el instanceof HTMLElement &&
+                    el.scrollHeight > el.clientHeight + 1 &&
+                    el.scrollTop > 0
+                ) {
+                    return false;
+                }
+                el = el.parentElement;
+            }
+            return true;
+        };
+
         /** 터치 시작 — 맨 위에서 시작된 단일 터치만 추적 후보로 삼는다. */
         const handleTouchStart = (e: TouchEvent) => {
             if (refreshingRef.current) return;
             if (e.touches.length !== 1) return;
-            // 맨 위가 아니면 일반 스크롤 — 추적하지 않는다.
+            // 컨테이너 또는 터치 경로의 내부 스크롤러가 맨 위가 아니면 일반 스크롤 — 추적하지 않는다.
             if (container.scrollTop > 0) return;
+            if (!isTouchPathAtTop(e.target)) return;
             trackingRef.current = true;
             pullingRef.current = false;
             startYRef.current = e.touches[0].clientY;
