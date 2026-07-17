@@ -961,22 +961,21 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 // 드래그 스크롤이 비활성화된 경우
                 if (!finalDragScrollConfig.enabled) return;
 
+                // 더 가까운(안쪽) OverlayScrollbar 인스턴스가 이미 이 press 로 드래그를
+                // 시작했으면(스크롤 가능 → preventDefault 호출) 바깥 인스턴스는 양보한다.
+                // 안쪽 인스턴스가 스크롤할 게 없으면 preventDefault 없이 반환하므로
+                // 자연스럽게 바깥 인스턴스로 드래그가 전파된다.
+                if (event.defaultPrevented) return;
+
                 // 텍스트 입력 요소나 제외 대상이면 드래그 스크롤 하지 않음
                 const target = event.target as Element;
 
                 // React 포털로 렌더된 자식(중첩 다이얼로그 등)의 press 는 React 트리로
                 // 버블링되어 이 핸들러까지 도달하지만 DOM 상으로는 이 컨테이너 밖이다.
                 // 실제 DOM 컨테이너 내부 press 만 드래그 스크롤 대상으로 삼는다.
+                // (포털 위 다이얼로그에 스크롤이 없어도 아래 다이얼로그로 전파하지 않는다)
                 const container = containerRef.current;
                 if (!container || !container.contains(target)) return;
-
-                // 중첩된 OverlayScrollbar 는 press 지점에서 가장 가까운 인스턴스만
-                // 드래그를 담당한다 (겹친 두 인스턴스가 동시에 드래그되는 것 방지).
-                if (
-                    target.closest(".overlay-scrollbar-container") !== container
-                ) {
-                    return;
-                }
 
                 if (isTextInputElement(target, finalDragScrollConfig)) {
                     return;
