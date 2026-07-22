@@ -1567,14 +1567,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             position: "absolute",
                             top: 0,
                             left: "50%",
-                            transform: `translate(-50%, ${pullDistance - 44}px)`,
+                            transform: `translate(-50%, ${pullDistance - 56}px)`,
                             transition: isRefreshing
                                 ? "transform 0.15s ease-out"
                                 : pullDistance === 0
                                   ? "transform 0.2s ease-out"
                                   : "none",
-                            width: 36,
-                            height: 36,
+                            width: 48,
+                            height: 48,
                             borderRadius: "50%",
                             background: "#ffffff",
                             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
@@ -1589,8 +1589,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         {isRefreshing ? (
                             // 새로고침 실행 중 — 스피너
                             <svg
-                                width="20"
-                                height="20"
+                                width="28"
+                                height="28"
                                 viewBox="0 0 24 24"
                                 style={{
                                     animation:
@@ -1612,8 +1612,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         ) : (
                             // 당기는 중 — 진행률에 따라 회전하는 새로고침 화살표
                             <svg
-                                width="20"
-                                height="20"
+                                width="28"
+                                height="28"
                                 viewBox="0 0 24 24"
                                 style={{
                                     transform: `rotate(${pullProgress * 270}deg)`,
