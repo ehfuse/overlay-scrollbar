@@ -73,6 +73,14 @@ export const usePullToRefresh = ({
 
         /** 터치 시작 — 맨 위에서 시작된 단일 터치만 추적 후보로 삼는다. */
         const handleTouchStart = (e: TouchEvent) => {
+            // 새 터치가 시작되면 이전 제스처의 추적/당김 상태를 항상 먼저 비운다.
+            // touchend/touchcancel 이 유실되면(예: WebView 제스처 아레나가 터치를 가로챌 때,
+            // 중첩 스크롤러 환경에서 흔함) pullingRef 가 true 로 남아, 그 뒤 touchmove 가
+            // preventDefault 로 네이티브 스크롤을 영구히 막는(스크롤 먹통) 문제가 있었다.
+            // 아래 early return 들은 상태를 리셋하지 않으므로, 여기서 무조건 초기화해 재발을 막는다.
+            trackingRef.current = false;
+            pullingRef.current = false;
+
             if (refreshingRef.current) return;
             if (e.touches.length !== 1) return;
             // 컨테이너 또는 터치 경로의 내부 스크롤러가 맨 위가 아니면 일반 스크롤 — 추적하지 않는다.
