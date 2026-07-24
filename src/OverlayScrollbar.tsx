@@ -113,8 +113,10 @@ export interface OverlayScrollbarProps {
 // "맨 위로" FAB 설정
 export interface ScrollTopFabConfig {
     threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 200)
-    position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "left")
+    position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "right")
     offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
+    background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
+    color?: string; // FAB 아이콘 색 (기본값: "#ffffff")
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -178,8 +180,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const fabEnabled = scrollTopFab !== false && scrollTopFab != null;
         const fabConfig = typeof scrollTopFab === "object" ? scrollTopFab : {};
         const fabThreshold = fabConfig.threshold ?? 200;
-        const fabPosition = fabConfig.position ?? "left";
+        const fabPosition = fabConfig.position ?? "right";
         const fabOffset = fabConfig.offset ?? 16;
+        const fabBackground = fabConfig.background ?? "#1976d2";
+        const fabColor = fabConfig.color ?? "#ffffff";
         // FAB 노출 여부 — 컨테이너 scrollTop 이 threshold 를 넘으면 표시한다.
         const [showScrollTopFab, setShowScrollTopFab] = useState(false);
 
@@ -2126,9 +2130,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             justifyContent: "center",
                             border: "none",
                             borderRadius: "50%",
-                            backgroundColor: "#ffffff",
-                            color: "#334155",
-                            boxShadow: "0 2px 8px rgba(15, 23, 42, 0.24)",
+                            backgroundColor: fabBackground,
+                            color: fabColor,
+                            boxShadow: "0 3px 8px rgba(15, 23, 42, 0.28)",
                             cursor: "pointer",
                             opacity: showScrollTopFab ? 1 : 0,
                             transform: showScrollTopFab
