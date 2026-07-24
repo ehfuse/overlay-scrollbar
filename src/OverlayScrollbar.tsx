@@ -1497,16 +1497,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             const style = document.createElement("style");
             style.id = styleId;
-            // 터치 기기(coarse pointer)에서는 커스텀 오버레이 트랙/thumb 을 끄고 네이티브 스크롤을 쓰므로,
-            // 네이티브 스크롤바를 숨기지 않는다(숨기면 스크롤바가 아예 안 보인다). 얇은 네이티브 스크롤바를 그대로 노출한다.
+            // 터치 기기(coarse pointer)에서는 커스텀 오버레이 트랙/thumb 을 끄고 네이티브 스크롤을 쓴다.
+            // 이때 스크롤바 스타일을 전혀 주입하지 않아(빈 문자열) 모바일 브라우저의 기본 스크롤바 동작
+            // (스크롤 중에만 나타나는 오버레이형 등)을 그대로 쓰게 한다. thin 을 강제하면 플랫폼 기본을 덮어써 안 보일 수 있다.
             // 마우스(fine) 기기에서만 네이티브 스크롤바를 감추고 커스텀 오버레이 스크롤바만 보인다.
             const hideNativeScrollbarCss = isCoarsePointer
-                ? `
-                /* 터치 기기: 네이티브 스크롤바 유지(숨기지 않음) */
-                .overlay-scrollbar-container {
-                    scrollbar-width: thin;
-                    -ms-overflow-style: auto;
-                }`
+                ? ""
                 : `
                 /* 마우스 기기: 네이티브 스크롤바 숨기고 커스텀 오버레이만 표시 */
                 .overlay-scrollbar-container {
@@ -1663,10 +1659,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
                         overflow: "auto", // 네이티브 스크롤 기능 유지
-                        // 마우스 기기는 네이티브 스크롤바를 숨기고 커스텀 오버레이를 쓰지만,
-                        // 터치 기기는 커스텀 오버레이를 끄므로 네이티브 스크롤바를 그대로 노출한다(숨기면 안 보인다).
-                        scrollbarWidth: isCoarsePointer ? "thin" : "none", // Firefox
-                        msOverflowStyle: isCoarsePointer ? "auto" : "none", // IE/Edge
+                        // 마우스 기기는 네이티브 스크롤바를 숨기고 커스텀 오버레이를 쓴다.
+                        // 터치 기기는 커스텀 오버레이를 끄고, 스크롤바 스타일을 지정하지 않아 브라우저 기본 스크롤바를 그대로 쓴다.
+                        ...(isCoarsePointer
+                            ? {}
+                            : {
+                                  scrollbarWidth: "none" as const, // Firefox
+                                  msOverflowStyle: "none" as const, // IE/Edge
+                              }),
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
                         userSelect: isDragScrolling ? "none" : "auto", // 실제 드래그 중 텍스트 선택 방지
