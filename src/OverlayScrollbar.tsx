@@ -35,6 +35,7 @@ import React, {
 } from "react";
 import { isTextInputElement } from "./utils/dragScrollUtils";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
+import { useCoarsePointer } from "./hooks/useCoarsePointer";
 import type { PullToRefreshConfig } from "./types";
 
 // thumb 관련 설정
@@ -142,13 +143,21 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             autoHide = DEFAULT_AUTO_HIDE_CONFIG,
             pullToRefresh = DEFAULT_PULL_TO_REFRESH_CONFIG,
 
-            // 기타 설정들
-            showScrollbar = true,
-            showHorizontalScrollbar = true,
+            // 기타 설정들 (showScrollbar/showHorizontalScrollbar 는 터치 기기에서 아래 파생값으로 강제 off)
+            showScrollbar: showScrollbarProp = true,
+            showHorizontalScrollbar: showHorizontalScrollbarProp = true,
             detectInnerScroll = false,
         },
         ref,
     ) => {
+        // 터치 우선 기기(모바일/태블릿)에서는 커스텀 스크롤바 UI·드래그 스크롤을 끄고 네이티브 스크롤만 쓴다
+        // (오버레이 컨테이너의 overflow:auto·PTR 은 그대로 유지). 커스텀 thumb/track 렌더와 드래그가 안 돌아
+        // 터치 제스처가 커스텀 로직에 가로채이지 않는다.
+        const isCoarsePointer = useCoarsePointer();
+        // 터치 기기면 커스텀 스크롤바 표시를 강제로 끈다(소비처 prop 무관).
+        const showScrollbar = isCoarsePointer ? false : showScrollbarProp;
+        const showHorizontalScrollbar = isCoarsePointer ? false : showHorizontalScrollbarProp;
+
         // props 변경 추적용 ref
         const prevPropsRef = useRef<{
             children?: ReactNode;
@@ -305,11 +314,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         const finalDragScrollConfig = useMemo(
             () => ({
-                enabled: dragScroll.enabled ?? true,
+                // 터치 기기는 네이티브 스크롤이 자연스러우므로 드래그 스크롤을 끈다(소비처 prop 무관).
+                enabled: isCoarsePointer ? false : dragScroll.enabled ?? true,
                 excludeClasses: dragScroll.excludeClasses ?? [],
                 excludeSelectors: dragScroll.excludeSelectors ?? [],
             }),
-            [dragScroll],
+            [dragScroll, isCoarsePointer],
         );
 
         const finalAutoHideConfig = useMemo(
