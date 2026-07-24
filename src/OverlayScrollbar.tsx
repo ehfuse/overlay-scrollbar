@@ -107,6 +107,14 @@ export interface OverlayScrollbarProps {
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
     showHorizontalScrollbar?: boolean; // 하단(가로) 스크롤바 표시 여부 (기본값: true)
     detectInnerScroll?: boolean; // children 내부의 스크롤 요소 감지 여부 (기본값: false, 가상 테이블 등에 사용)
+    scrollTopFab?: boolean | ScrollTopFabConfig; // "맨 위로" FAB 표시(기본값: false). true 면 기본 설정으로, 객체면 세부 설정.
+}
+
+// "맨 위로" FAB 설정
+export interface ScrollTopFabConfig {
+    threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 200)
+    position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "left")
+    offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -148,6 +156,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             showScrollbar: showScrollbarProp = true,
             showHorizontalScrollbar: showHorizontalScrollbarProp = true,
             detectInnerScroll = false,
+            scrollTopFab = false,
         },
         ref,
     ) => {
@@ -164,6 +173,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // (fine/coarse 판정이 다른 인스턴스가 섞여도 서로 스크롤바를 지우지 않는다.)
         const rawInstanceId = useId();
         const instanceClass = `os-${rawInstanceId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+
+        // "맨 위로" FAB 설정을 정규화한다(boolean 이면 기본값, 객체면 병합).
+        const fabEnabled = scrollTopFab !== false && scrollTopFab != null;
+        const fabConfig = typeof scrollTopFab === "object" ? scrollTopFab : {};
+        const fabThreshold = fabConfig.threshold ?? 200;
+        const fabPosition = fabConfig.position ?? "left";
+        const fabOffset = fabConfig.offset ?? 16;
+        // FAB 노출 여부 — 컨테이너 scrollTop 이 threshold 를 넘으면 표시한다.
+        const [showScrollTopFab, setShowScrollTopFab] = useState(false);
 
         // props 변경 추적용 ref
         const prevPropsRef = useRef<{
@@ -1110,6 +1128,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const handleScroll = (event: Event) => {
                 updateScrollbar();
 
+                // "맨 위로" FAB 노출 여부 갱신(활성 시에만).
+                if (fabEnabled) {
+                    const top = (event.target as HTMLElement | null)?.scrollTop ?? 0;
+                    setShowScrollTopFab(top > fabThreshold);
+                }
+
                 // 초기 지연 중에는 스크롤바 표시하지 않음
                 if (isInitialDelayActive) {
                     if (onScroll) {
@@ -1241,6 +1265,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             finalAutoHideConfig,
             isWheelScrolling,
             isInitialDelayActive,
+            fabEnabled,
+            fabThreshold,
         ]);
 
         // 키보드 네비게이션 핸들러 (방향키, PageUp/PageDown/Home/End)
@@ -2074,6 +2100,60 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             />
                         </div>
                     )}
+
+                {/* "맨 위로" FAB — 스크롤을 threshold 이상 내리면 나타나고, 누르면 컨테이너를 맨 위로 되돌린다.
+                    MUI 등 외부 의존성 없이 순수 button + 인라인 SVG 로 그린다. */}
+                {fabEnabled && (
+                    <button
+                        type="button"
+                        aria-label="맨 위로"
+                        onClick={() =>
+                            containerRef.current?.scrollTo({
+                                top: 0,
+                                behavior: "smooth",
+                            })
+                        }
+                        style={{
+                            position: "absolute",
+                            [fabPosition]: fabOffset,
+                            bottom: fabOffset,
+                            zIndex: 1200,
+                            width: 40,
+                            height: 40,
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "none",
+                            borderRadius: "50%",
+                            backgroundColor: "#ffffff",
+                            color: "#334155",
+                            boxShadow: "0 2px 8px rgba(15, 23, 42, 0.24)",
+                            cursor: "pointer",
+                            opacity: showScrollTopFab ? 1 : 0,
+                            transform: showScrollTopFab
+                                ? "translateY(0) scale(1)"
+                                : "translateY(8px) scale(0.9)",
+                            pointerEvents: showScrollTopFab ? "auto" : "none",
+                            transition:
+                                "opacity 0.2s ease, transform 0.2s ease",
+                        }}
+                    >
+                        <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <polyline points="18 15 12 9 6 15" />
+                        </svg>
+                    </button>
+                )}
             </div>
         );
     },
