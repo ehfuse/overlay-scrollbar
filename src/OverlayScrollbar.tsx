@@ -32,6 +32,7 @@ import React, {
     forwardRef,
     useImperativeHandle,
     useLayoutEffect,
+    useId,
 } from "react";
 import { isTextInputElement } from "./utils/dragScrollUtils";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
@@ -157,6 +158,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 터치 기기면 커스텀 스크롤바 표시를 강제로 끈다(소비처 prop 무관).
         const showScrollbar = isCoarsePointer ? false : showScrollbarProp;
         const showHorizontalScrollbar = isCoarsePointer ? false : showHorizontalScrollbarProp;
+
+        // 인스턴스 고유 클래스 — 스크롤바 숨김/표시 CSS 를 이 인스턴스 컨테이너에만 적용해
+        // 전역 `.overlay-scrollbar-container` 선택자가 페이지의 다른 인스턴스까지 오염시키지 않게 한다.
+        // (fine/coarse 판정이 다른 인스턴스가 섞여도 서로 스크롤바를 지우지 않는다.)
+        const rawInstanceId = useId();
+        const instanceClass = `os-${rawInstanceId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
         // props 변경 추적용 ref
         const prevPropsRef = useRef<{
@@ -1485,43 +1492,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // trackWidth가 thumbWidth보다 작으면 thumbWidth와 같게 설정
         const adjustedTrackWidth = Math.max(finalTrackWidth, finalThumbWidth);
 
-        // 웹킷 스크롤바 숨기기용 CSS 동적 주입
+        // PTR 스피너 keyframes·editor-content 스크롤바는 입력장치와 무관하게 전역 1회만 주입한다.
         useEffect(() => {
-            const styleId = "overlay-scrollbar-webkit-hide";
-
-            // 이미 스타일이 있으면 제거
-            const existingStyle = document.getElementById(styleId);
-            if (existingStyle) {
-                existingStyle.remove();
+            const styleId = "overlay-scrollbar-shared";
+            if (document.getElementById(styleId)) {
+                return; // 이미 있으면 재주입하지 않는다(다른 인스턴스가 넣어둠).
             }
-
             const style = document.createElement("style");
             style.id = styleId;
-            // 터치 기기(coarse pointer)에서는 커스텀 오버레이 트랙/thumb 을 끄고 네이티브 스크롤을 쓴다.
-            // 이때 스크롤바 스타일을 전혀 주입하지 않아(빈 문자열) 모바일 브라우저의 기본 스크롤바 동작
-            // (스크롤 중에만 나타나는 오버레이형 등)을 그대로 쓰게 한다. thin 을 강제하면 플랫폼 기본을 덮어써 안 보일 수 있다.
-            // 마우스(fine) 기기에서만 네이티브 스크롤바를 감추고 커스텀 오버레이 스크롤바만 보인다.
-            const hideNativeScrollbarCss = isCoarsePointer
-                ? ""
-                : `
-                /* 마우스 기기: 네이티브 스크롤바 숨기고 커스텀 오버레이만 표시 */
-                .overlay-scrollbar-container {
-                    scrollbar-width: none !important;
-                    -ms-overflow-style: none !important;
-                }
-                .overlay-scrollbar-container::-webkit-scrollbar {
-                    display: none !important;
-                    width: 0 !important;
-                    height: 0 !important;
-                }
-                .overlay-scrollbar-container::-webkit-scrollbar-track {
-                    display: none !important;
-                }
-                .overlay-scrollbar-container::-webkit-scrollbar-thumb {
-                    display: none !important;
-                }`;
-            // editor-content 스크롤바 유지·PTR 스피너 keyframes 는 입력장치와 무관하게 항상 필요하다.
-            style.textContent = `${hideNativeScrollbarCss}
+            style.textContent = `
                 /* ehfuse-editor-content는 스크롤바 유지 */
                 .overlay-scrollbar-container .ehfuse-editor-content {
                     scrollbar-width: thin !important;
@@ -1552,14 +1531,57 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 }
             `;
             document.head.appendChild(style);
+            // 공유 keyframes 는 제거하지 않는다(다른 인스턴스가 계속 참조할 수 있음).
+        }, []);
+
+        // 인스턴스별 스크롤바 CSS 를 이 인스턴스 컨테이너 클래스(instanceClass)에만 주입한다.
+        // 전역 `.overlay-scrollbar-container` 선택자를 쓰지 않으므로 다른 인스턴스의 스크롤바를 지우지 않는다.
+        useEffect(() => {
+            const styleId = `overlay-scrollbar-instance-${instanceClass}`;
+            const existing = document.getElementById(styleId);
+            if (existing) existing.remove();
+
+            const style = document.createElement("style");
+            style.id = styleId;
+            const sel = `.${instanceClass}`;
+            // 터치 기기(coarse): 커스텀 오버레이 트랙/thumb 을 끄는 대신, 항상 보이는 얇은 네이티브 스크롤바를
+            //   이 인스턴스에만 명시적으로 그린다(모바일 오버레이 스크롤바는 정지 시 사라져 "안 보인다"고 느낀다).
+            // 마우스 기기(fine): 네이티브 스크롤바를 숨기고 커스텀 오버레이 스크롤바만 보인다.
+            style.textContent = isCoarsePointer
+                ? `
+                ${sel} {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
+                }
+                ${sel}::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+                ${sel}::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                ${sel}::-webkit-scrollbar-thumb {
+                    background: rgba(100, 116, 139, 0.55);
+                    border-radius: 3px;
+                }`
+                : `
+                ${sel} {
+                    scrollbar-width: none !important;
+                    -ms-overflow-style: none !important;
+                }
+                ${sel}::-webkit-scrollbar {
+                    display: none !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                }
+                ${sel}::-webkit-scrollbar-track { display: none !important; }
+                ${sel}::-webkit-scrollbar-thumb { display: none !important; }`;
+            document.head.appendChild(style);
 
             return () => {
-                const styleToRemove = document.getElementById(styleId);
-                if (styleToRemove) {
-                    styleToRemove.remove();
-                }
+                document.getElementById(styleId)?.remove();
             };
-        }, [isCoarsePointer]);
+        }, [isCoarsePointer, instanceClass]);
 
         return (
             <div
@@ -1650,7 +1672,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 {/* 스크롤 컨테이너 */}
                 <div
                     ref={containerRef}
-                    className="overlay-scrollbar-container"
+                    // 공용 클래스 + 인스턴스 고유 클래스. 스크롤바 표시/숨김 CSS 는 인스턴스 클래스에만 걸린다.
+                    className={`overlay-scrollbar-container ${instanceClass}`}
                     tabIndex={-1} // 키보드 포커스 가능하게 함
                     onMouseDown={handleDragScrollStart}
                     style={{
@@ -1659,14 +1682,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
                         overflow: "auto", // 네이티브 스크롤 기능 유지
-                        // 마우스 기기는 네이티브 스크롤바를 숨기고 커스텀 오버레이를 쓴다.
-                        // 터치 기기는 커스텀 오버레이를 끄고, 스크롤바 스타일을 지정하지 않아 브라우저 기본 스크롤바를 그대로 쓴다.
-                        ...(isCoarsePointer
-                            ? {}
-                            : {
-                                  scrollbarWidth: "none" as const, // Firefox
-                                  msOverflowStyle: "none" as const, // IE/Edge
-                              }),
+                        // 스크롤바 표시/숨김은 인스턴스 클래스 CSS(useEffect)가 담당한다(인라인으로 강제하지 않음).
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
                         userSelect: isDragScrolling ? "none" : "auto", // 실제 드래그 중 텍스트 선택 방지
