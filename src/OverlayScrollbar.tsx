@@ -163,12 +163,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         },
         ref,
     ) => {
-        // 터치 우선 기기(모바일/태블릿)에서는 커스텀 스크롤바 UI·드래그 스크롤을 끄고 네이티브 스크롤만 쓴다
-        // (오버레이 컨테이너의 overflow:auto·PTR 은 그대로 유지). 커스텀 thumb/track 렌더와 드래그가 안 돌아
-        // 터치 제스처가 커스텀 로직에 가로채이지 않는다.
+        // 터치 우선 기기(모바일/태블릿) 판정. 네이티브 스크롤바를 CSS 로 강제해도 무시하는 웹뷰가 있어,
+        // 터치에서도 커스텀 오버레이 세로 스크롤바(자체 트랙/thumb)를 표시한다(항상 보임 보장).
+        // 다만 ① 가로 스크롤바는 끄고(하단 회색선 방지) ② 드래그 스크롤은 끈다(아래 finalDragScrollConfig)
+        // — 터치 제스처가 커스텀 드래그 로직에 가로채이지 않게.
         const isCoarsePointer = useCoarsePointer();
-        // 터치 기기면 커스텀 스크롤바 표시를 강제로 끈다(소비처 prop 무관).
-        const showScrollbar = isCoarsePointer ? false : showScrollbarProp;
+        // 세로 커스텀 스크롤바는 소비처 값 그대로(터치에서도 표시). 가로만 터치에서 강제 off.
+        const showScrollbar = showScrollbarProp;
         const showHorizontalScrollbar = isCoarsePointer ? false : showHorizontalScrollbarProp;
 
         // 인스턴스 고유 클래스 — 스크롤바 숨김/표시 CSS 를 이 인스턴스 컨테이너에만 적용해
@@ -1576,32 +1577,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             const style = document.createElement("style");
             style.id = styleId;
             const sel = `.${instanceClass}`;
-            // 터치 기기(coarse): 커스텀 오버레이 트랙/thumb 을 끄는 대신, 항상 보이는 얇은 네이티브 스크롤바를
-            //   이 인스턴스에만 명시적으로 그린다(모바일 오버레이 스크롤바는 정지 시 사라져 "안 보인다"고 느낀다).
-            // 마우스 기기(fine): 네이티브 스크롤바를 숨기고 커스텀 오버레이 스크롤바만 보인다.
-            style.textContent = isCoarsePointer
-                ? `
-                ${sel} {
-                    scrollbar-width: thin;
-                    scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
-                }
-                ${sel}::-webkit-scrollbar {
-                    width: 6px;
-                    height: 6px;
-                    display: block;
-                }
-                ${sel}::-webkit-scrollbar:horizontal {
-                    height: 0;
-                }
-                ${sel}::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                ${sel}::-webkit-scrollbar-thumb {
-                    background: rgba(100, 116, 139, 0.55);
-                    border-radius: 3px;
-                    min-height: 40px;
-                }`
-                : `
+            // fine/coarse 모두 네이티브 스크롤바는 숨긴다 — 표시되는 스크롤바는 커스텀 오버레이(자체 트랙/thumb)뿐.
+            // (터치에서도 커스텀 오버레이를 켜므로 네이티브를 그릴 필요가 없고, 둘이 겹치면 지저분하다.)
+            style.textContent = `
                 ${sel} {
                     scrollbar-width: none !important;
                     -ms-overflow-style: none !important;
@@ -1618,7 +1596,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             return () => {
                 document.getElementById(styleId)?.remove();
             };
-        }, [isCoarsePointer, instanceClass]);
+        }, [instanceClass]);
 
         return (
             <div
