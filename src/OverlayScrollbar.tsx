@@ -1585,12 +1585,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     scrollbar-width: thin;
                     scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
                 }
-                ${sel}::-webkit-scrollbar:vertical {
+                ${sel}::-webkit-scrollbar {
                     width: 6px;
+                    height: 6px;
+                    display: block;
                 }
                 ${sel}::-webkit-scrollbar:horizontal {
                     height: 0;
-                    display: none;
                 }
                 ${sel}::-webkit-scrollbar-track {
                     background: transparent;
@@ -1598,6 +1599,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 ${sel}::-webkit-scrollbar-thumb {
                     background: rgba(100, 116, 139, 0.55);
                     border-radius: 3px;
+                    min-height: 40px;
                 }`
                 : `
                 ${sel} {
