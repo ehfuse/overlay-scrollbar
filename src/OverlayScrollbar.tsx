@@ -117,6 +117,7 @@ export interface ScrollTopFabConfig {
     offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
     color?: string; // FAB 아이콘 색 (기본값: "#ffffff")
+    size?: number; // FAB 지름(px) (기본값: 48)
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -184,6 +185,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const fabOffset = fabConfig.offset ?? 16;
         const fabBackground = fabConfig.background ?? "#1976d2";
         const fabColor = fabConfig.color ?? "#ffffff";
+        const fabSize = fabConfig.size ?? 48;
         // FAB 노출 여부 — 컨테이너 scrollTop 이 threshold 를 넘으면 표시한다.
         const [showScrollTopFab, setShowScrollTopFab] = useState(false);
 
@@ -1583,9 +1585,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     scrollbar-width: thin;
                     scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
                 }
-                ${sel}::-webkit-scrollbar {
+                ${sel}::-webkit-scrollbar:vertical {
                     width: 6px;
-                    height: 6px;
+                }
+                ${sel}::-webkit-scrollbar:horizontal {
+                    height: 0;
+                    display: none;
                 }
                 ${sel}::-webkit-scrollbar-track {
                     background: transparent;
@@ -2122,8 +2127,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             [fabPosition]: fabOffset,
                             bottom: fabOffset,
                             zIndex: 1200,
-                            width: 40,
-                            height: 40,
+                            width: fabSize,
+                            height: fabSize,
                             padding: 0,
                             display: "flex",
                             alignItems: "center",
@@ -2144,8 +2149,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         }}
                     >
                         <svg
-                            width="22"
-                            height="22"
+                            width={Math.round(fabSize * 0.5)}
+                            height={Math.round(fabSize * 0.5)}
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
