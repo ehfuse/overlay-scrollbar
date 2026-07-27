@@ -89,7 +89,8 @@ export interface OverlayScrollbarProps {
 // "맨 위로" FAB 설정
 export interface ScrollTopFabConfig {
     threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 600)
-    hideDelay?: number; // 스크롤이 멈춘 뒤 이 시간(ms) 후 FAB 를 자동으로 숨긴다 (기본값: 1500, 0 이면 자동숨김 없음)
+    idleDelay?: number; // 스크롤이 이 시간(ms) 동안 멈추면 "정지"로 보고 FAB 를 선명하게 만든다 (기본값: 400)
+    scrollingOpacity?: number; // 스크롤 중 FAB 불투명도 — 내용을 가리지 않게 반투명 (기본값: 0.45)
     position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "right")
     offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
