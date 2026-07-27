@@ -113,9 +113,9 @@ export interface OverlayScrollbarProps {
 // "맨 위로" FAB 설정
 export interface ScrollTopFabConfig {
     threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 600)
-    idleDelay?: number; // 스크롤이 이 시간(ms) 동안 멈추면 "정지"로 보고 FAB 를 선명하게 만든다 (기본값: 80 — 체감상 즉시)
-    scrollingOpacity?: number; // 스크롤 중 FAB 불투명도 — 내용을 가리지 않게 반투명 (기본값: 0.45)
-    hideDelay?: number; // 스크롤이 멈춰 선명해진 뒤 이 시간(ms) 후 FAB 를 자동으로 숨긴다 (기본값: 1500, 0 이면 자동숨김 없음)
+    idleOpacity?: number; // 평상시 FAB 불투명도 — 내용을 가리지 않게 반투명 유지, 누를 때만 1 (기본값: 0.45)
+    scrollingOpacity?: number; // @deprecated idleOpacity 로 대체(하위호환용 별칭)
+    hideDelay?: number; // 스크롤이 멈춘 뒤 이 시간(ms) 후 FAB 를 자동으로 숨긴다 (기본값: 1500, 0 이면 자동숨김 없음)
     position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "right")
     offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
@@ -185,8 +185,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const fabEnabled = scrollTopFab !== false && scrollTopFab != null;
         const fabConfig = typeof scrollTopFab === "object" ? scrollTopFab : {};
         const fabThreshold = fabConfig.threshold ?? 600;
-        const fabIdleDelay = fabConfig.idleDelay ?? 80;
-        const fabScrollingOpacity = fabConfig.scrollingOpacity ?? 0.45;
+        const fabIdleOpacity = fabConfig.idleOpacity ?? fabConfig.scrollingOpacity ?? 0.45;
         const fabHideDelay = fabConfig.hideDelay ?? 1500;
         const fabPosition = fabConfig.position ?? "right";
         const fabOffset = fabConfig.offset ?? 16;
@@ -195,10 +194,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const fabSize = fabConfig.size ?? 48;
         // FAB 노출 여부 — 컨테이너 scrollTop 이 threshold 를 넘으면 표시한다.
         const [showScrollTopFab, setShowScrollTopFab] = useState(false);
-        // 스크롤 중 여부 — FAB 를 스크롤 중에는 반투명, 멈추면 선명하게 보여주기 위한 상태.
-        const [isFabScrolling, setIsFabScrolling] = useState(false);
-        // 스크롤이 멈춘 것으로 판정하는 타이머(스크롤마다 리셋).
-        const fabIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+        // FAB 를 누르고 있는 동안만 선명하게 보여주기 위한 상태(그 외에는 반투명 유지).
+        const [isFabPressed, setIsFabPressed] = useState(false);
         // 스크롤이 멈춘 뒤 FAB 를 자동으로 숨기는 타이머(스크롤마다 리셋).
         const fabHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1148,32 +1145,24 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
 
                 // "맨 위로" FAB 노출 여부 갱신(활성 시에만).
-                // 임계값을 넘으면 표시 → 스크롤 중에는 반투명 → 멈추면 즉시 선명 → fabHideDelay 후 페이드아웃.
-                // (스크롤 중 숨겼다가 멈출 때 띄우면 정작 누르려는 순간에 안 보이고 관성 스크롤마다 점멸한다)
-                // 브라우저에 "스크롤 종료" 이벤트가 없어 정지 판정은 짧은 타이머(fabIdleDelay, 기본 80ms)로 한다.
+                // 임계값을 넘으면 **반투명 상태로 계속 표시**하고, 스크롤이 멈추면 fabHideDelay 후 페이드아웃한다.
+                // 선명해지는 건 눌렀을 때(isFabPressed)뿐이다 — 멈출 때마다 선명↔반투명이 오가면 깜빡임이 심하다.
+                // 브라우저에 "스크롤 종료" 이벤트가 없어 정지 판정은 마지막 스크롤 기준 타이머로 한다.
                 if (fabEnabled) {
                     const top = (event.target as HTMLElement | null)?.scrollTop ?? 0;
                     const shouldShow = top > fabThreshold;
                     setShowScrollTopFab(shouldShow);
-                    setIsFabScrolling(true);
-                    if (fabIdleTimerRef.current) {
-                        clearTimeout(fabIdleTimerRef.current);
-                    }
                     if (fabHideTimerRef.current) {
                         clearTimeout(fabHideTimerRef.current);
                         fabHideTimerRef.current = null;
                     }
-                    fabIdleTimerRef.current = setTimeout(() => {
-                        fabIdleTimerRef.current = null;
-                        setIsFabScrolling(false);
-                        // 멈춘 뒤(선명해진 시점)부터 자동숨김 카운트를 시작한다.
-                        if (shouldShow && fabHideDelay > 0) {
-                            fabHideTimerRef.current = setTimeout(() => {
-                                fabHideTimerRef.current = null;
-                                setShowScrollTopFab(false);
-                            }, fabHideDelay);
-                        }
-                    }, fabIdleDelay);
+                    // 스크롤이 멈춘 뒤 fabHideDelay 후 자동으로 숨긴다(스크롤마다 리셋).
+                    if (shouldShow && fabHideDelay > 0) {
+                        fabHideTimerRef.current = setTimeout(() => {
+                            fabHideTimerRef.current = null;
+                            setShowScrollTopFab(false);
+                        }, fabHideDelay);
+                    }
                 }
 
                 // 초기 지연 중에는 스크롤바 표시하지 않음
@@ -1309,16 +1298,12 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             isInitialDelayActive,
             fabEnabled,
             fabThreshold,
-            fabIdleDelay,
             fabHideDelay,
         ]);
 
-        // 언마운트 시 FAB 타이머(정지판정·자동숨김)를 정리한다.
+        // 언마운트 시 FAB 자동숨김 타이머를 정리한다.
         useEffect(
             () => () => {
-                if (fabIdleTimerRef.current) {
-                    clearTimeout(fabIdleTimerRef.current);
-                }
                 if (fabHideTimerRef.current) {
                     clearTimeout(fabHideTimerRef.current);
                 }
@@ -2146,12 +2131,18 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     <button
                         type="button"
                         aria-label="맨 위로"
-                        onClick={() =>
+                        onClick={() => {
+                            setIsFabPressed(false);
                             containerRef.current?.scrollTo({
                                 top: 0,
                                 behavior: "smooth",
-                            })
-                        }
+                            });
+                        }}
+                        // 누르는 동안만 선명해진다(그 외에는 반투명 유지).
+                        onPointerDown={() => setIsFabPressed(true)}
+                        onPointerUp={() => setIsFabPressed(false)}
+                        onPointerLeave={() => setIsFabPressed(false)}
+                        onPointerCancel={() => setIsFabPressed(false)}
                         style={{
                             position: "absolute",
                             [fabPosition]: fabOffset,
@@ -2169,12 +2160,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             color: fabColor,
                             boxShadow: "0 3px 8px rgba(15, 23, 42, 0.28)",
                             cursor: "pointer",
-                            // 임계값을 넘으면 표시하되, 스크롤 중에는 반투명으로 두어 내용을 가리지 않는다.
-                            opacity: showScrollTopFab
-                                ? isFabScrolling
-                                    ? fabScrollingOpacity
-                                    : 1
-                                : 0,
+                            // 표시 중에는 반투명을 계속 유지해 내용을 가리지 않고, 누를 때만 선명해진다.
+                            opacity: showScrollTopFab ? (isFabPressed ? 1 : fabIdleOpacity) : 0,
                             pointerEvents: showScrollTopFab ? "auto" : "none",
                             // 크기/이동 없이 페이드인·아웃만 한다.
                             // 표시 중(반투명↔선명)은 즉각적으로, 자동숨김 페이드아웃은 부드럽게(0.45s).
