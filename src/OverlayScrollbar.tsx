@@ -2175,14 +2175,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                     ? fabScrollingOpacity
                                     : 1
                                 : 0,
-                            transform: showScrollTopFab
-                                ? "translateY(0) scale(1)"
-                                : "translateY(8px) scale(0.9)",
                             pointerEvents: showScrollTopFab ? "auto" : "none",
+                            // 크기/이동 없이 페이드인·아웃만 한다.
                             // 표시 중(반투명↔선명)은 즉각적으로, 자동숨김 페이드아웃은 부드럽게(0.45s).
-                            transition: showScrollTopFab
-                                ? "opacity 0.15s ease, transform 0.15s ease"
-                                : "opacity 0.45s ease, transform 0.45s ease",
+                            transition: showScrollTopFab ? "opacity 0.15s ease" : "opacity 0.45s ease",
                         }}
                     >
                         <svg
