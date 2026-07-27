@@ -1743,6 +1743,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     onMouseDown={handleDragScrollStart}
                     style={{
                         display: "flex",
+                        // ⚠️ flexDirection 을 column 으로 바꾸지 않는다.
+                        // content 의 flex:"1 1 0%" 가 column 에서는 **세로** 크기를 잡아(basis 0 + grow 1)
+                        // 콘텐츠 높이가 컨테이너에 고정되어 scrollHeight == clientHeight 가 되고 스크롤이 죽는다.
+                        // (하단 spacer 는 content 안에서 flex 축소 불가로 배치한다)
                         width: "100%", // 명시적 너비 설정
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
@@ -1770,13 +1774,11 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         {bottomSpacerHeight > 0 && (
                             // 스크롤 컨테이너의 padding-bottom 은 스크롤 끝에서 무시되므로,
                             // 지정된 하단 padding 을 실제 높이를 가진 spacer 로 대체한다.
+                            // content 는 column flex 라 이 자식이 마지막 줄로 쌓여 스크롤 영역을 늘린다.
                             <div
                                 className="overlay-scrollbar-bottom-spacer"
                                 aria-hidden="true"
-                                style={{
-                                    flex: "0 0 auto",
-                                    height: bottomSpacerHeight,
-                                }}
+                                style={{ flex: "0 0 auto", height: bottomSpacerHeight }}
                             />
                         )}
                     </div>
