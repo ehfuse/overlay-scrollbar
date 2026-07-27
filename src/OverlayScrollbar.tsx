@@ -35,6 +35,7 @@ import React, {
     useId,
 } from "react";
 import { isTextInputElement } from "./utils/dragScrollUtils";
+import { extractBottomPadding } from "./utils/bottomSpacerUtils";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
 import { useCoarsePointer } from "./hooks/useCoarsePointer";
 import type { PullToRefreshConfig } from "./types";
@@ -1633,6 +1634,20 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             };
         }, [instanceClass]);
 
+        // 스크롤 컨테이너의 padding-bottom 은 스크롤 끝에서 브라우저가 무시하므로,
+        // container/content 에 지정된 하단 padding 을 걷어내 spacer 높이로 합산한다.
+        const { normalizedContainerStyle, normalizedContentStyle, bottomSpacerHeight } =
+            useMemo(() => {
+                const container = extractBottomPadding(containerStyle);
+                const content = extractBottomPadding(contentStyle);
+                return {
+                    normalizedContainerStyle: container.style,
+                    normalizedContentStyle: content.style,
+                    bottomSpacerHeight:
+                        container.spacerHeight + content.spacerHeight,
+                };
+            }, [containerStyle, contentStyle]);
+
         return (
             <div
                 ref={wrapperRef}
@@ -1736,7 +1751,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         // 키보드 포커스 스타일 (접근성)
                         outline: "none", // 기본 아웃라인 제거
                         userSelect: isDragScrolling ? "none" : "auto", // 실제 드래그 중 텍스트 선택 방지
-                        ...containerStyle, // 사용자 정의 스타일 적용
+                        ...normalizedContainerStyle, // 사용자 정의 스타일(하단 padding 은 spacer 로 분리)
                     }}
                 >
                     <div
@@ -1748,10 +1763,22 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             display: "flex", // flex 컨테이너로 설정
                             flexDirection: "column", // 세로 방향 정렬
                             boxSizing: "border-box",
-                            ...contentStyle, // 사용자 정의 스타일 적용
+                            ...normalizedContentStyle, // 사용자 정의 스타일(하단 padding 은 spacer 로 분리)
                         }}
                     >
                         {children}
+                        {bottomSpacerHeight > 0 && (
+                            // 스크롤 컨테이너의 padding-bottom 은 스크롤 끝에서 무시되므로,
+                            // 지정된 하단 padding 을 실제 높이를 가진 spacer 로 대체한다.
+                            <div
+                                className="overlay-scrollbar-bottom-spacer"
+                                aria-hidden="true"
+                                style={{
+                                    flex: "0 0 auto",
+                                    height: bottomSpacerHeight,
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
 
