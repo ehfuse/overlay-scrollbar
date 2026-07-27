@@ -83,6 +83,18 @@ export interface OverlayScrollbarProps {
     showScrollbar?: boolean; // 스크롤바 표시 여부 (기본값: true)
     showHorizontalScrollbar?: boolean; // 하단(가로) 스크롤바 표시 여부 (기본값: true)
     detectInnerScroll?: boolean; // children 내부의 스크롤 요소 감지 여부 (기본값: false, 가상 테이블 등에 사용)
+    scrollTopFab?: boolean | ScrollTopFabConfig; // "맨 위로" FAB 표시(기본값: false). true 면 기본 설정으로, 객체면 세부 설정.
+}
+
+// "맨 위로" FAB 설정
+export interface ScrollTopFabConfig {
+    threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 600)
+    hideDelay?: number; // 스크롤이 멈춘 뒤 이 시간(ms) 후 FAB 를 자동으로 숨긴다 (기본값: 1500, 0 이면 자동숨김 없음)
+    position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "right")
+    offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
+    background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
+    color?: string; // FAB 아이콘 색 (기본값: "#ffffff")
+    size?: number; // FAB 지름(px) (기본값: 48)
 }
 
 // OverlayScrollbar가 노출할 메서드들

@@ -112,7 +112,8 @@ export interface OverlayScrollbarProps {
 
 // "맨 위로" FAB 설정
 export interface ScrollTopFabConfig {
-    threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 200)
+    threshold?: number; // 이 값(px) 이상 내려가면 FAB 를 표시한다 (기본값: 600)
+    hideDelay?: number; // 스크롤이 멈춘 뒤 이 시간(ms) 후 FAB 를 자동으로 숨긴다 (기본값: 1500, 0 이면 자동숨김 없음)
     position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "right")
     offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
@@ -181,7 +182,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // "맨 위로" FAB 설정을 정규화한다(boolean 이면 기본값, 객체면 병합).
         const fabEnabled = scrollTopFab !== false && scrollTopFab != null;
         const fabConfig = typeof scrollTopFab === "object" ? scrollTopFab : {};
-        const fabThreshold = fabConfig.threshold ?? 200;
+        const fabThreshold = fabConfig.threshold ?? 600;
+        const fabHideDelay = fabConfig.hideDelay ?? 1500;
         const fabPosition = fabConfig.position ?? "right";
         const fabOffset = fabConfig.offset ?? 16;
         const fabBackground = fabConfig.background ?? "#1976d2";
@@ -189,6 +191,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const fabSize = fabConfig.size ?? 48;
         // FAB 노출 여부 — 컨테이너 scrollTop 이 threshold 를 넘으면 표시한다.
         const [showScrollTopFab, setShowScrollTopFab] = useState(false);
+        // 스크롤이 멈춘 뒤 FAB 를 자동으로 숨기는 타이머(스크롤마다 리셋).
+        const fabHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
         // props 변경 추적용 ref
         const prevPropsRef = useRef<{
@@ -1136,9 +1140,21 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 updateScrollbar();
 
                 // "맨 위로" FAB 노출 여부 갱신(활성 시에만).
+                // 임계값을 넘으면 표시하고, 스크롤이 멈춘 뒤 fabHideDelay 후 자동으로 숨긴다(스크롤마다 타이머 리셋).
                 if (fabEnabled) {
                     const top = (event.target as HTMLElement | null)?.scrollTop ?? 0;
-                    setShowScrollTopFab(top > fabThreshold);
+                    const shouldShow = top > fabThreshold;
+                    setShowScrollTopFab(shouldShow);
+                    if (fabHideTimerRef.current) {
+                        clearTimeout(fabHideTimerRef.current);
+                        fabHideTimerRef.current = null;
+                    }
+                    if (shouldShow && fabHideDelay > 0) {
+                        fabHideTimerRef.current = setTimeout(() => {
+                            fabHideTimerRef.current = null;
+                            setShowScrollTopFab(false);
+                        }, fabHideDelay);
+                    }
                 }
 
                 // 초기 지연 중에는 스크롤바 표시하지 않음
@@ -1274,7 +1290,18 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             isInitialDelayActive,
             fabEnabled,
             fabThreshold,
+            fabHideDelay,
         ]);
+
+        // 언마운트 시 FAB 자동숨김 타이머를 정리한다.
+        useEffect(
+            () => () => {
+                if (fabHideTimerRef.current) {
+                    clearTimeout(fabHideTimerRef.current);
+                }
+            },
+            []
+        );
 
         // 키보드 네비게이션 핸들러 (방향키, PageUp/PageDown/Home/End)
         useEffect(() => {
@@ -1622,14 +1649,14 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             position: "absolute",
                             top: 0,
                             left: "50%",
-                            transform: `translate(-50%, ${pullDistance - 56}px)`,
+                            transform: `translate(-50%, ${pullDistance - 68}px)`,
                             transition: isRefreshing
                                 ? "transform 0.15s ease-out"
                                 : pullDistance === 0
                                   ? "transform 0.2s ease-out"
                                   : "none",
-                            width: 48,
-                            height: 48,
+                            width: 60,
+                            height: 60,
                             borderRadius: "50%",
                             background: "#ffffff",
                             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
@@ -1644,8 +1671,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         {isRefreshing ? (
                             // 새로고침 실행 중 — 스피너
                             <svg
-                                width="28"
-                                height="28"
+                                width="36"
+                                height="36"
                                 viewBox="0 0 24 24"
                                 style={{
                                     animation:
@@ -1667,8 +1694,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         ) : (
                             // 당기는 중 — 진행률에 따라 회전하는 새로고침 화살표
                             <svg
-                                width="28"
-                                height="28"
+                                width="36"
+                                height="36"
                                 viewBox="0 0 24 24"
                                 style={{
                                     transform: `rotate(${pullProgress * 270}deg)`,
@@ -2124,8 +2151,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                                 ? "translateY(0) scale(1)"
                                 : "translateY(8px) scale(0.9)",
                             pointerEvents: showScrollTopFab ? "auto" : "none",
-                            transition:
-                                "opacity 0.2s ease, transform 0.2s ease",
+                            // 등장은 빠르게(0.2s), 자동숨김 페이드아웃은 부드럽게(0.45s).
+                            transition: showScrollTopFab
+                                ? "opacity 0.2s ease, transform 0.2s ease"
+                                : "opacity 0.45s ease, transform 0.45s ease",
                         }}
                     >
                         <svg

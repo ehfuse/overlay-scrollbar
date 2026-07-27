@@ -6,7 +6,6 @@
 
 export { default } from "./OverlayScrollbar";
 export { default as OverlayScrollbar } from "./OverlayScrollbar";
-export type { ScrollTopFabConfig } from "./OverlayScrollbar";
 export type {
     OverlayScrollbarRef,
     OverlayScrollbarProps,
@@ -16,4 +15,5 @@ export type {
     DragScrollConfig,
     AutoHideConfig,
     PullToRefreshConfig,
+    ScrollTopFabConfig,
 } from "./types";
