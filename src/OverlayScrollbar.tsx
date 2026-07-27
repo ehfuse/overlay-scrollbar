@@ -1744,9 +1744,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     style={{
                         display: "flex",
                         // ⚠️ flexDirection 을 column 으로 바꾸지 않는다.
-                        // content 의 flex:"1 1 0%" 가 column 에서는 **세로** 크기를 잡아(basis 0 + grow 1)
-                        // 콘텐츠 높이가 컨테이너에 고정되어 scrollHeight == clientHeight 가 되고 스크롤이 죽는다.
-                        // (하단 spacer 는 content 안에서 flex 축소 불가로 배치한다)
+                        // row 라서 content 의 flex 는 **가로**만 제어한다. column 으로 바꾸면 그 flex 가
+                        // 세로를 잡아 콘텐츠 높이가 컨테이너에 고정되고 scrollHeight == clientHeight 가 되어
+                        // 스크롤이 죽는다. (하단 spacer 는 content 안 마지막 자식으로 배치한다)
                         width: "100%", // 명시적 너비 설정
                         flex: "1 1 auto", // flex item으로 설정하여 높이를 자동으로 계산
                         minHeight: 0, // 최소 높이 보장
@@ -1762,8 +1762,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         ref={contentRef}
                         className="overlay-scrollbar-content"
                         style={{
-                            flex: "1 1 0%", // grow하여 공간 채우기
-                            minHeight: 0, // flex shrink 허용
+                            // ⚠️ basis 는 auto(내용 기준). "1 1 0%" 로 두면 basis 0 이라 안쪽 flex:1 자식이
+                            // 남는 공간을 다 먹어 하단 spacer 를 밀어내고, 콘텐츠가 넘쳐도 높이가 안 늘어난다.
+                            flex: "1 1 auto", // grow 하되 내용 높이를 기준으로 잡는다
                             display: "flex", // flex 컨테이너로 설정
                             flexDirection: "column", // 세로 방향 정렬
                             boxSizing: "border-box",
