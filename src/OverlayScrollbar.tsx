@@ -2209,7 +2209,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             strokeLinejoin="round"
                             aria-hidden="true"
                         >
-                            <polyline points="18 15 12 9 6 15" />
+                            {/* 위쪽 화살표(↑) — 꺾쇠(^)보다 "맨 위로" 의미가 분명하다. */}
+                            <line x1="12" y1="19" x2="12" y2="5" />
+                            <polyline points="5 12 12 5 19 12" />
                         </svg>
                     </button>
                 )}
