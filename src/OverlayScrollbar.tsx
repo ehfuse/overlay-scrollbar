@@ -119,6 +119,7 @@ export interface ScrollTopFabConfig {
     hideDelay?: number; // 스크롤이 멈춘 뒤 이 시간(ms) 후 FAB 를 자동으로 숨긴다 (기본값: 1500, 0 이면 자동숨김 없음)
     position?: "left" | "right"; // FAB 를 어느 쪽 하단에 둘지 (기본값: "right")
     offset?: number; // 화면 가장자리로부터의 여백(px) (기본값: 16)
+    offsetBottom?: number; // 아래쪽 여백(px)만 따로 줄 때 (기본값: offset). 하단 바 위로 띄우면서 옆 여백은 그대로 둘 때 쓴다.
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
     color?: string; // FAB 아이콘 색 (기본값: "#ffffff")
     size?: number; // FAB 지름(px) (기본값: 48)
@@ -190,6 +191,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const fabHideDelay = fabConfig.hideDelay ?? 1500;
         const fabPosition = fabConfig.position ?? "right";
         const fabOffset = fabConfig.offset ?? 16;
+        // 아래쪽 여백은 따로 받을 수 있다 — 하단 내비게이션 바가 있는 화면에서 옆 여백은 그대로 두고 위로만 올린다.
+        const fabOffsetBottom = fabConfig.offsetBottom ?? fabOffset;
         const fabBackground = fabConfig.background ?? "#1976d2";
         const fabColor = fabConfig.color ?? "#ffffff";
         const fabSize = fabConfig.size ?? 48;
@@ -2176,7 +2179,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         style={{
                             position: "absolute",
                             [fabPosition]: fabOffset,
-                            bottom: fabOffset,
+                            bottom: fabOffsetBottom,
                             zIndex: 1200,
                             width: fabSize,
                             height: fabSize,
