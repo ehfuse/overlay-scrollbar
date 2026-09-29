@@ -1052,6 +1052,16 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     return;
 
                 event.preventDefault();
+                // preventDefault 는 브라우저의 "빈 곳을 누르면 포커스 해제" 도 막는다 — 입력칸에 포커스가
+                // 남아 빈 곳을 눌러도 포커스 테두리가 풀리지 않았다. 누른 곳 밖에 있는 포커스는 직접 푼다.
+                const active = document.activeElement;
+                if (
+                    active instanceof HTMLElement &&
+                    active !== document.body &&
+                    !active.contains(target)
+                ) {
+                    active.blur();
+                }
                 isDragScrollPendingRef.current = true;
                 setDragScrollStart({
                     x: event.clientX,
