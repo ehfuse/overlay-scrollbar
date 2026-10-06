@@ -277,6 +277,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 드래그 스크롤 상태
         const isDragScrollPendingRef = useRef(false);
         const [isDragScrolling, setIsDragScrolling] = useState(false);
+        // 끝낼 때의 판정용 — 짧게 끌고 바로 떼면 mouseup 이 리렌더보다 먼저 와 state 는 아직 false 라,
+        // 숨김 타이머를 걸지 않고 끝나 스크롤바가 남았다.
+        const isDragScrollingRef = useRef(false);
         const [dragScrollStart, setDragScrollStart] = useState({
             x: 0,
             y: 0,
@@ -300,7 +303,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const wheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
             null,
         );
-        const [isWheelScrolling, setIsWheelScrolling] = useState(false);
+        // state 가 아니라 ref 다 — state 로 두면 값이 바뀔 때마다 스크롤 리스너 effect 가 다시 돌면서
+        // 방금 건 휠 타이머를 지워, 휠 한 칸에는 스크롤바가 안 뜨고 "휠 중" 상태도 풀리지 않았다.
+        const isWheelScrollingRef = useRef(false);
 
         // 숨김 타이머
         const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -1071,14 +1076,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 });
 
                 // 스크롤바는 실제 드래그가 발생할 때 표시 (handleDragScrollMove에서 처리)
-                clearHideTimer();
+                // ⚠️ 여기서 숨김 타이머를 지우지 않는다 — 누르기만 하고 끌지 않으면(그냥 클릭) 다시 걸어 주는 곳이
+                // 없어, 스크롤 직후 본문을 클릭하면 스크롤바가 사라지지 않고 계속 남았다.
             },
-            [
-                finalDragScrollConfig,
-                isTextInputElement,
-                findScrollableElement,
-                clearHideTimer,
-            ],
+            [finalDragScrollConfig, isTextInputElement, findScrollableElement],
         );
 
         // 드래그 스크롤 중
@@ -1099,6 +1100,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 if (isDragScrollPendingRef.current) {
                     isDragScrollPendingRef.current = false;
+                    isDragScrollingRef.current = true;
                     setIsDragScrolling(true);
                 }
 
@@ -1139,19 +1141,15 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
         // 드래그 스크롤 종료
         const handleDragScrollEnd = useCallback(() => {
-            const wasDragScrolling = isDragScrolling;
+            const wasDragScrolling = isDragScrollingRef.current;
             isDragScrollPendingRef.current = false;
+            isDragScrollingRef.current = false;
             setIsDragScrolling(false);
 
             if (wasDragScrolling && isScrollable()) {
                 setHideTimer(finalAutoHideConfig.delay);
             }
-        }, [
-            isDragScrolling,
-            isScrollable,
-            setHideTimer,
-            finalAutoHideConfig.delay,
-        ]);
+        }, [isScrollable, setHideTimer, finalAutoHideConfig.delay]);
 
         // 스크롤 이벤트 리스너 (externalScrollContainer 우선 사용)
         useEffect(() => {
@@ -1195,7 +1193,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 clearWheelShowTimer();
 
                 // 휠 스크롤 중이면 빠른 숨김, 아니면 기본 숨김 시간 적용
-                const delay = isWheelScrolling
+                const delay = isWheelScrollingRef.current
                     ? finalAutoHideConfig.delayOnWheel
                     : finalAutoHideConfig.delay;
                 setHideTimer(delay);
@@ -1207,7 +1205,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
             const handleWheel = () => {
                 // 휠 스크롤 상태 표시
-                setIsWheelScrolling(true);
+                isWheelScrollingRef.current = true;
 
                 // 기존 휠 타이머 제거
                 if (wheelTimeoutRef.current) {
@@ -1216,7 +1214,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
 
                 // 300ms 후 휠 스크롤 상태 해제 (휠 스크롤이 끝났다고 간주)
                 wheelTimeoutRef.current = setTimeout(() => {
-                    setIsWheelScrolling(false);
+                    isWheelScrollingRef.current = false;
                 }, 300);
 
                 // 휠 이벤트 시 50ms 디바운스 적용 (실제 스크롤 발생 시 handleScroll에서 취소됨)
@@ -1293,13 +1291,6 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                     element.removeEventListener("scroll", handleScroll);
                     element.removeEventListener("wheel", handleWheel);
                 });
-
-                if (wheelTimeoutRef.current) {
-                    clearTimeout(wheelTimeoutRef.current);
-                }
-                if (wheelShowTimeoutRef.current) {
-                    clearTimeout(wheelShowTimeoutRef.current);
-                }
             };
         }, [
             findScrollableElement,
@@ -1308,18 +1299,25 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             clearHideTimer,
             setHideTimer,
             finalAutoHideConfig,
-            isWheelScrolling,
             isInitialDelayActive,
             fabEnabled,
             fabThreshold,
             fabHideDelay,
         ]);
 
-        // 언마운트 시 FAB 자동숨김 타이머를 정리한다.
+        // 언마운트 시 FAB 자동숨김·휠 타이머를 정리한다.
+        // 휠 타이머를 리스너 effect 정리에서 지우지 않는 이유: 그 effect 는 onScroll 같은 prop 이 바뀔 때마다
+        // 다시 도는데, 그때마다 지우면 걸어 둔 표시·"휠 중" 해제가 사라진다.
         useEffect(
             () => () => {
                 if (fabHideTimerRef.current) {
                     clearTimeout(fabHideTimerRef.current);
+                }
+                if (wheelTimeoutRef.current) {
+                    clearTimeout(wheelTimeoutRef.current);
+                }
+                if (wheelShowTimeoutRef.current) {
+                    clearTimeout(wheelShowTimeoutRef.current);
                 }
             },
             []
@@ -1806,6 +1804,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             ref={scrollbarRef}
                             className="overlay-scrollbar-track"
                             onMouseEnter={() => {
+                                // 터치의 탭은 mouseenter 만 흉내 내고 mouseleave 는 다른 곳을 누를 때까지 오지 않는다 —
+                                // 호버로 붙잡으면 오른쪽 끝을 한 번 눌렀을 때 스크롤바가 계속 남는다.
+                                if (isCoarsePointer) return;
+
                                 // 숨김 타이머는 즉시 취소
                                 clearHideTimer();
 
@@ -2029,6 +2031,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         <div
                             className="overlay-scrollbar-horizontal-track"
                             onMouseEnter={() => {
+                                // 터치의 탭은 mouseenter 만 흉내 내고 mouseleave 는 다른 곳을 누를 때까지 오지 않는다 —
+                                // 호버로 붙잡으면 오른쪽 끝을 한 번 눌렀을 때 스크롤바가 계속 남는다.
+                                if (isCoarsePointer) return;
+
                                 // 숨김 타이머는 즉시 취소
                                 clearHideTimer();
 
