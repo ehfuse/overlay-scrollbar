@@ -302,6 +302,12 @@ const checkElementAndParents = (
     element: Element,
     config?: DragScrollConfig
 ): boolean => {
+    // 표시 속성으로 끈 영역 — 줄 자체를 끌어 순서를 바꾸는 목록(dnd-kit 등)은 끌기가 곧 순서 옮기기라 드래그 스크롤이 같이 돌면 안 된다.
+    // 클래스 목록에 없는 요소도 소비처가 data-drag-scroll="off" 만 붙이면 빠진다(깊이 제한 없이 조상까지).
+    if (element.closest('[data-drag-scroll="off"]')) {
+        return true;
+    }
+
     // 모든 제외 클래스들 합치기 (기본 클래스 + 사용자 추가 클래스)
     const allExcludeClasses = [
         ...DEFAULT_EXCLUDE_CLASSES,
