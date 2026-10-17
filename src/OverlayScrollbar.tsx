@@ -1515,10 +1515,32 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             }
         }, [finalAutoHideConfig.initialDelay]);
 
+        // 크기 변경 알림은 한 화면 그림에 한 번만 반영한다(1.7.31 배포본에서 옮김 — 저장소에 빠져 있었다).
+        // ResizeObserver 콜백 안에서 곧바로 재면 "ResizeObserver loop" 경고와 연속 재계산이 생긴다.
+        const updateScrollbarRef = useRef(updateScrollbar);
+        updateScrollbarRef.current = updateScrollbar;
+        const resizeFrameRef = useRef<number | null>(null);
+        const scheduleResizeUpdate = useCallback(() => {
+            if (resizeFrameRef.current !== null) return;
+            resizeFrameRef.current = requestAnimationFrame(() => {
+                resizeFrameRef.current = null;
+                updateScrollbarRef.current();
+            });
+        }, []);
+        useEffect(
+            () => () => {
+                if (resizeFrameRef.current !== null) {
+                    cancelAnimationFrame(resizeFrameRef.current);
+                    resizeFrameRef.current = null;
+                }
+            },
+            [],
+        );
+
         // Resize observer로 크기 변경 감지
         useEffect(() => {
             const resizeObserver = new ResizeObserver(() => {
-                updateScrollbar();
+                scheduleResizeUpdate();
             });
 
             const elementsToObserve: HTMLElement[] = [];
@@ -1545,7 +1567,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
             });
 
             return () => resizeObserver.disconnect();
-        }, [updateScrollbar]);
+        }, [updateScrollbar, scheduleResizeUpdate]);
 
         // MutationObserver로 DOM 변경 감지
         useEffect(() => {
