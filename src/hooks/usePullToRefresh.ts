@@ -162,11 +162,40 @@ export const usePullToRefresh = ({
         };
 
         // preventDefault 를 쓰므로 touchmove 는 passive: false 로 등록해야 한다.
+        // 단 맨 위에 있을 때만 건다(1.7.34) — passive: false 리스너가 있으면 브라우저는 터치를 시작할 때마다
+        // 메인 스레드가 그 리스너를 돌릴 때까지 스크롤을 붙잡는다. 목록 중간에서 메인 스레드가 잠깐 바쁘면
+        // 스크롤이 멈췄다가 그동안 민 거리만큼 한 번에 튀었다(안드로이드 앱 메일 목록, 2026-10-19 — 117px).
+        // 당김은 맨 위에서 시작한 터치만 쓰므로, 내려가 있는 동안은 리스너를 떼어 스크롤을 합성 쪽에 맡긴다.
+        let moveAttached = false;
+        /** 당김용 touchmove 리스너를 건다 */
+        const attachMove = () => {
+            if (moveAttached) return;
+            container.addEventListener("touchmove", handleTouchMove, {
+                passive: false,
+            });
+            moveAttached = true;
+        };
+        /** 당김용 touchmove 리스너를 뗀다 */
+        const detachMove = () => {
+            if (!moveAttached) return;
+            container.removeEventListener("touchmove", handleTouchMove);
+            moveAttached = false;
+        };
+        /** 스크롤 위치에 맞춰 건다 · 뗀다 — 세로로 굴러가는 상자(안쪽 가상 목록 포함)만 본다 */
+        const syncMove = (e: Event) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            if (t.scrollHeight <= t.clientHeight + 1) return; // 가로 스크롤 등
+            if (t.scrollTop <= 0) attachMove();
+            else if (!trackingRef.current) detachMove();
+        };
+        attachMove();
+        container.addEventListener("scroll", syncMove, {
+            passive: true,
+            capture: true,
+        });
         container.addEventListener("touchstart", handleTouchStart, {
             passive: true,
-        });
-        container.addEventListener("touchmove", handleTouchMove, {
-            passive: false,
         });
         container.addEventListener("touchend", handleTouchEnd, {
             passive: true,
@@ -177,7 +206,8 @@ export const usePullToRefresh = ({
 
         return () => {
             container.removeEventListener("touchstart", handleTouchStart);
-            container.removeEventListener("touchmove", handleTouchMove);
+            detachMove();
+            container.removeEventListener("scroll", syncMove, { capture: true });
             container.removeEventListener("touchend", handleTouchEnd);
             container.removeEventListener("touchcancel", handleTouchEnd);
         };
