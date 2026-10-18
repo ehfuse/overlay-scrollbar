@@ -2204,7 +2204,9 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         aria-label="맨 위로"
                         onClick={() => {
                             setIsFabPressed(false);
-                            containerRef.current?.scrollTo({
+                            // 실제로 굴러가는 상자를 올린다 — detectInnerScroll(가상 표 등)이면 안쪽 요소가 굴러가서,
+                            // 바깥 컨테이너만 올리면 아무 일도 없었다(1.7.33). 노출 판정(handleScroll)도 같은 요소 기준이다.
+                            (findScrollableElement() ?? containerRef.current)?.scrollTo({
                                 top: 0,
                                 behavior: "smooth",
                             });
