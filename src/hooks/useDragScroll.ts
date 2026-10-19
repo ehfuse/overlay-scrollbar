@@ -139,12 +139,23 @@ export const useDragScroll = ({
 
     // 드래그 스크롤 종료
     const handleDragScrollEnd = useCallback(() => {
+        // 실제로 끌어 스크롤했으면 손을 뗀 자리의 클릭을 한 번 삼킨다(1.7.35) — mouseup 뒤에 브라우저가 click 을 쏴
+        // 끌기를 시작한 줄(메일 목록의 한 통 등)이 열렸다. 클릭이 안 오는 경우(다른 요소 위에서 뗌)를 위해 다음 차례에 푼다.
+        if (isDragStarted) {
+            const swallow = (event: MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                window.removeEventListener("click", swallow, true);
+            };
+            window.addEventListener("click", swallow, true);
+            window.setTimeout(() => window.removeEventListener("click", swallow, true), 0);
+        }
         setIsDragScrolling(false);
         setIsDragStarted(false); // 드래그 상태 초기화
         if (isScrollable()) {
             setHideTimer(hideDelay);
         }
-    }, [isScrollable, setHideTimer, hideDelay]);
+    }, [isDragStarted, isScrollable, setHideTimer, hideDelay]);
 
     // 전역 마우스 이벤트 리스너
     useEffect(() => {
