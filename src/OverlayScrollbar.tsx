@@ -1142,6 +1142,18 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         // 드래그 스크롤 종료
         const handleDragScrollEnd = useCallback(() => {
             const wasDragScrolling = isDragScrollingRef.current;
+            // 실제로 끌어 스크롤했으면 손을 뗀 자리의 클릭을 한 번 삼킨다(1.7.36) — mouseup 뒤 브라우저가 click 을 쏴
+            // 끌기를 시작한 줄(메일 목록의 한 통 등)이 열렸다. 1.7.35 는 이 컴포넌트가 쓰지 않는 hooks/useDragScroll 에만 넣어 닿지 않았다.
+            // 클릭이 안 오는 경우(다른 요소 위에서 뗌)를 위해 다음 차례에 푼다 — click 은 mouseup 과 같은 차례에 와서 그 전에 잡힌다.
+            if (wasDragScrolling) {
+                const swallow = (event: MouseEvent) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.removeEventListener("click", swallow, true);
+                };
+                window.addEventListener("click", swallow, true);
+                window.setTimeout(() => window.removeEventListener("click", swallow, true), 0);
+            }
             isDragScrollPendingRef.current = false;
             isDragScrollingRef.current = false;
             setIsDragScrolling(false);
