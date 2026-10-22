@@ -201,6 +201,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
         const [showScrollTopFab, setShowScrollTopFab] = useState(false);
         // FAB 를 누르고 있는 동안만 선명하게 보여주기 위한 상태(그 외에는 반투명 유지).
         const [isFabPressed, setIsFabPressed] = useState(false);
+        // 마우스를 올리면 선명하게(2026-10-22 사용자 지시) — 손가락은 올리기가 없어 마우스일 때만 본다(터치 뒤 선명한 채 남지 않게).
+        const [isFabHovered, setIsFabHovered] = useState(false);
         // 스크롤이 멈춘 뒤 FAB 를 자동으로 숨기는 타이머(스크롤마다 리셋).
         const fabHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -2229,7 +2231,13 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                         // 누르는 동안만 선명해진다(그 외에는 반투명 유지).
                         onPointerDown={() => setIsFabPressed(true)}
                         onPointerUp={() => setIsFabPressed(false)}
-                        onPointerLeave={() => setIsFabPressed(false)}
+                        onPointerEnter={(event) => {
+                            if (event.pointerType === "mouse") setIsFabHovered(true);
+                        }}
+                        onPointerLeave={() => {
+                            setIsFabPressed(false);
+                            setIsFabHovered(false);
+                        }}
                         onPointerCancel={() => setIsFabPressed(false)}
                         style={{
                             position: "absolute",
@@ -2248,8 +2256,8 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                             color: fabColor,
                             boxShadow: "0 3px 8px rgba(15, 23, 42, 0.28)",
                             cursor: "pointer",
-                            // 표시 중에는 반투명을 계속 유지해 내용을 가리지 않고, 누를 때만 선명해진다.
-                            opacity: showScrollTopFab ? (isFabPressed ? 1 : fabIdleOpacity) : 0,
+                            // 표시 중에는 반투명을 계속 유지해 내용을 가리지 않고, 마우스를 올리거나 누를 때만 선명해진다.
+                            opacity: showScrollTopFab ? (isFabPressed || isFabHovered ? 1 : fabIdleOpacity) : 0,
                             pointerEvents: showScrollTopFab ? "auto" : "none",
                             // 크기/이동 없이 페이드인·아웃만 한다.
                             // 표시 중(반투명↔선명)은 즉각적으로, 자동숨김 페이드아웃은 부드럽게(0.45s).
