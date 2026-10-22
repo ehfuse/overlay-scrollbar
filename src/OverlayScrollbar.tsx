@@ -1093,8 +1093,10 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 const deltaX = dragScrollStart.x - event.clientX;
                 const deltaY = dragScrollStart.y - event.clientY;
 
-                // 5px 이상 움직였을 때만 실제 드래그 스크롤을 시작한다.
-                if (Math.abs(deltaY) < 5 && Math.abs(deltaX) < 5) {
+                // 일정 거리 이상 움직였을 때만 실제 드래그 스크롤을 시작한다(1.7.37 — 5px → 기본 12px).
+                // 5px 이면 누르는 동안 손이 살짝만 흔들려도 끌기가 되어 클릭이 삼켜졌다(2026-10-22 사용자 지적).
+                const dragThreshold = dragScroll.threshold ?? 12;
+                if (Math.abs(deltaY) < dragThreshold && Math.abs(deltaX) < dragThreshold) {
                     return;
                 }
 

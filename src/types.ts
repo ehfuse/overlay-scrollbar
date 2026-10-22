@@ -44,6 +44,7 @@ export interface DragScrollConfig {
     enabled?: boolean; // 드래그 스크롤 활성화 여부 (기본값: true)
     excludeClasses?: string[]; // 드래그 스크롤을 제외할 추가 클래스들 (자신 또는 부모 요소 확인, 최대 5단계)
     excludeSelectors?: string[]; // 드래그 스크롤을 제외할 추가 CSS 셀렉터들 (element.matches() 사용)
+    threshold?: number; // 이 거리(px) 넘게 움직여야 끌기로 본다 — 그 안이면 클릭 (기본값: 12, 1.7.37)
 }
 
 // 자동 숨김 관련 설정
