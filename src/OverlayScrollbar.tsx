@@ -124,6 +124,7 @@ export interface ScrollTopFabConfig {
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
     color?: string; // FAB 아이콘 색 (기본값: "#ffffff")
     size?: number; // FAB 지름(px) (기본값: 48)
+    label?: string; // 화면 읽기용 이름 (기본값: "맨 위로") — 다른 언어 화면에서 넘긴다
 }
 
 // OverlayScrollbar가 노출할 메서드들
@@ -2218,7 +2219,7 @@ const OverlayScrollbar = forwardRef<OverlayScrollbarRef, OverlayScrollbarProps>(
                 {fabEnabled && (
                     <button
                         type="button"
-                        aria-label="맨 위로"
+                        aria-label={fabConfig.label ?? "맨 위로"}
                         onClick={() => {
                             setIsFabPressed(false);
                             // 실제로 굴러가는 상자를 올린다 — detectInnerScroll(가상 표 등)이면 안쪽 요소가 굴러가서,

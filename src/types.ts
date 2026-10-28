@@ -99,6 +99,7 @@ export interface ScrollTopFabConfig {
     background?: string; // FAB 배경색 (기본값: "#1976d2" — MUI 기본 primary)
     color?: string; // FAB 아이콘 색 (기본값: "#ffffff")
     size?: number; // FAB 지름(px) (기본값: 48)
+    label?: string; // 화면 읽기용 이름 (기본값: "맨 위로") — 다른 언어 화면에서 넘긴다
 }
 
 // OverlayScrollbar가 노출할 메서드들
